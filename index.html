@@ -1,0 +1,2553 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ExamFlow — Тренажёр</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0d0d0f;
+    --surface: #16161a;
+    --surface2: #1e1e24;
+    --border: #2a2a35;
+    --accent: #c8f04d;
+    --accent2: #ff6b6b;
+    --accent3: #6bc5ff;
+    --text: #e8e8f0;
+    --muted: #6b6b80;
+    --correct: #4dcd8f;
+    --wrong: #ff6b6b;
+    --radius: 12px;
+    --font: 'Syne', sans-serif;
+    --mono: 'DM Mono', monospace;
+    /* liquid glass */
+    --glass-bg:      rgba(255,255,255,0.04);
+    --glass-bg2:     rgba(255,255,255,0.07);
+    --glass-border:  rgba(255,255,255,0.10);
+    --glass-shine:   rgba(255,255,255,0.06);
+    --glass-blur:    18px;
+    --glass-shadow:  0 8px 32px rgba(0,0,0,0.45), 0 1px 0 rgba(255,255,255,0.06) inset;
+  }
+
+  /* ── LIGHT THEME ── */
+  [data-theme="light"] {
+    --bg: #dde4ee;
+    --surface: #f0f4fb;
+    --surface2: #e4eaf5;
+    --border: #c8d0e0;
+    --accent: #5a9e00;
+    --accent2: #d93636;
+    --accent3: #1a7abf;
+    --text: #1a1a24;
+    --muted: #7a7a90;
+    --correct: #1e9e5e;
+    --wrong: #d93636;
+    color-scheme: light;
+    --glass-bg:      rgba(255,255,255,0.45);
+    --glass-bg2:     rgba(255,255,255,0.60);
+    --glass-border:  rgba(255,255,255,0.75);
+    --glass-shine:   rgba(255,255,255,0.55);
+    --glass-shadow:  0 8px 32px rgba(100,120,180,0.18), 0 1px 0 rgba(255,255,255,0.8) inset;
+  }
+
+  /* ── PURPLE THEME ── */
+  [data-theme="purple"] {
+    --bg: #0a0715;
+    --surface: #16112a;
+    --surface2: #1e1836;
+    --border: #2e2650;
+    --accent: #b06dff;
+    --accent2: #ff6bcc;
+    --accent3: #6bc5ff;
+    --text: #ece8f8;
+    --muted: #7a6ea0;
+    --correct: #6bdfa0;
+    --wrong: #ff6bcc;
+    --glass-bg:      rgba(140,80,255,0.08);
+    --glass-bg2:     rgba(140,80,255,0.14);
+    --glass-border:  rgba(180,120,255,0.18);
+    --glass-shine:   rgba(200,160,255,0.08);
+    --glass-shadow:  0 8px 32px rgba(80,0,180,0.45), 0 1px 0 rgba(180,140,255,0.10) inset;
+  }
+
+  /* ── RED THEME ── */
+  [data-theme="red"] {
+    --bg: #0d0707;
+    --surface: #1c1010;
+    --surface2: #261616;
+    --border: #3a2020;
+    --accent: #ff4d4d;
+    --accent2: #ffaa00;
+    --accent3: #ff8c6b;
+    --text: #f5e8e8;
+    --muted: #8a6060;
+    --correct: #4dcd8f;
+    --wrong: #ffaa00;
+    --glass-bg:      rgba(255,60,60,0.07);
+    --glass-bg2:     rgba(255,60,60,0.12);
+    --glass-border:  rgba(255,100,100,0.16);
+    --glass-shine:   rgba(255,160,120,0.07);
+    --glass-shadow:  0 8px 32px rgba(160,0,0,0.45), 0 1px 0 rgba(255,120,80,0.08) inset;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  html {
+    background: var(--bg);
+    color-scheme: dark;
+  }
+
+  body {
+    font-family: var(--font);
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    -webkit-text-size-adjust: 100%;
+    /* animated ambient blobs */
+    position: relative;
+    overflow-x: hidden;
+  }
+
+  /* ambient background blobs */
+  body::before, body::after {
+    content: '';
+    position: fixed;
+    border-radius: 50%;
+    filter: blur(90px);
+    opacity: 0.35;
+    pointer-events: none;
+    z-index: 0;
+    animation: blobDrift 18s ease-in-out infinite alternate;
+  }
+  body::before {
+    width: 600px; height: 600px;
+    top: -150px; left: -150px;
+    background: radial-gradient(circle, var(--accent) 0%, transparent 70%);
+    opacity: 0.18;
+  }
+  body::after {
+    width: 500px; height: 500px;
+    bottom: -100px; right: -100px;
+    background: radial-gradient(circle, var(--accent2) 0%, transparent 70%);
+    opacity: 0.13;
+    animation-delay: -9s;
+  }
+  @keyframes blobDrift {
+    from { transform: translate(0,0) scale(1); }
+    to   { transform: translate(40px, 30px) scale(1.08); }
+  }
+
+  /* all content above blobs */
+  .site-header, .info-panel, .page { position: relative; z-index: 1; }
+
+  /* ══════════════════════════════════════
+     HEADER
+  ══════════════════════════════════════ */
+  .site-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0.75rem 1.5rem;
+    border-bottom: 1px solid var(--glass-border);
+    background: var(--glass-bg2);
+    backdrop-filter: blur(var(--glass-blur)) saturate(1.6);
+    -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(1.6);
+    box-shadow: var(--glass-shadow), 0 1px 0 var(--glass-shine) inset;
+    position: sticky;
+    top: 0;
+    z-index: 200;
+    gap: 0.5rem;
+    min-height: 52px;
+  }
+
+  .header-left {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    flex-shrink: 0;
+  }
+
+  .logo {
+    font-size: 1.35rem;
+    font-weight: 800;
+    letter-spacing: -0.04em;
+    line-height: 1;
+    cursor: pointer;
+    user-select: none;
+  }
+  .logo span { color: var(--accent); }
+
+  .header-right {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+
+  .q-counter {
+    font-family: var(--mono);
+    font-size: 0.75rem;
+    color: var(--muted);
+    white-space: nowrap;
+  }
+
+  .btn-sm {
+    background: none;
+    border: 1px solid var(--border);
+    color: var(--muted);
+    padding: 0.35rem 0.7rem;
+    border-radius: 6px;
+    cursor: pointer;
+    font-family: var(--font);
+    font-size: 0.72rem;
+    font-weight: 700;
+    transition: all 0.15s;
+    white-space: nowrap;
+  }
+  .btn-sm:hover { border-color: var(--accent); color: var(--accent); }
+  .btn-sm.danger:hover { border-color: var(--wrong); color: var(--wrong); }
+
+  /* ══════════════════════════════════════
+     INFO PANEL (progress bar row)
+  ══════════════════════════════════════ */
+  .info-panel {
+    display: none; /* shown after questions loaded */
+    align-items: center;
+    gap: 1rem;
+    padding: 0.5rem 1.5rem;
+    background: var(--glass-bg);
+    backdrop-filter: blur(12px) saturate(1.4);
+    -webkit-backdrop-filter: blur(12px) saturate(1.4);
+    border-bottom: 1px solid var(--glass-border);
+    box-shadow: 0 1px 0 var(--glass-shine) inset;
+    flex-wrap: wrap;
+  }
+
+  .info-panel .info-q {
+    font-family: var(--mono);
+    font-size: 0.72rem;
+    color: var(--muted);
+    white-space: nowrap;
+  }
+  .info-panel .info-q strong { color: var(--text); }
+
+  .info-progress-wrap {
+    flex: 1;
+    min-width: 100px;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+  .info-bar {
+    flex: 1;
+    height: 3px;
+    background: var(--surface2);
+    border-radius: 99px;
+    overflow: hidden;
+  }
+  .info-bar-fill {
+    height: 100%;
+    background: var(--accent);
+    border-radius: 99px;
+    transition: width 0.4s cubic-bezier(.4,0,.2,1);
+  }
+  .info-pct {
+    font-family: var(--mono);
+    font-size: 0.68rem;
+    color: var(--muted);
+    white-space: nowrap;
+  }
+
+  .info-mode-badge {
+    font-family: var(--mono);
+    font-size: 0.68rem;
+    color: var(--muted);
+    display: flex;
+    align-items: center;
+    gap: 0.3rem;
+    white-space: nowrap;
+  }
+  .info-dot {
+    width: 5px; height: 5px;
+    border-radius: 50%;
+    background: var(--accent);
+    flex-shrink: 0;
+  }
+
+  /* ══════════════════════════════════════
+     MAIN LAYOUT
+  ══════════════════════════════════════ */
+  .page {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .content-area {
+    flex: 1;
+    max-width: 720px;
+    width: 100%;
+    margin: 0 auto;
+    padding: 1.5rem;
+  }
+
+  /* ══════════════════════════════════════
+     LANDING / IMPORT SECTION
+  ══════════════════════════════════════ */
+  .landing-hero {
+    text-align: center;
+    padding: 2.5rem 0 2rem;
+    background: radial-gradient(ellipse 80% 50% at 50% 0%, rgba(200,240,77,0.07) 0%, transparent 70%);
+    margin: -1.5rem -1.5rem 2rem;
+    padding: 3rem 1.5rem 2rem;
+  }
+
+  .landing-logo {
+    font-size: clamp(2.5rem, 8vw, 4rem);
+    font-weight: 800;
+    letter-spacing: -0.04em;
+    line-height: 1;
+    margin-bottom: 0.5rem;
+  }
+  .landing-logo span { color: var(--accent); }
+
+  .landing-tagline {
+    font-family: var(--mono);
+    font-size: 0.8rem;
+    color: var(--muted);
+    letter-spacing: 0.08em;
+    margin-bottom: 0.4rem;
+  }
+
+  .author-tag {
+    font-family: var(--mono);
+    font-size: 0.72rem;
+    color: var(--muted);
+    opacity: 0.7;
+  }
+  .author-tag span { color: var(--accent); }
+
+  .import-card.drag-over {
+    border-color: var(--accent);
+    background: var(--glass-bg2);
+  }
+  .import-card.drag-over::after {
+    content: '⬇ Отпустите файл здесь';
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: var(--mono);
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: var(--accent);
+    background: rgba(13,13,15,0.72);
+    backdrop-filter: blur(8px);
+    border-radius: 16px;
+    pointer-events: none;
+  }
+  .import-card {
+    position: relative;
+    background: var(--glass-bg);
+    border: 1px solid var(--glass-border);
+    backdrop-filter: blur(var(--glass-blur)) saturate(1.5);
+    -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(1.5);
+    box-shadow: var(--glass-shadow);
+    background-image: linear-gradient(135deg, var(--glass-shine) 0%, transparent 50%);
+    border-radius: 16px;
+    padding: 1.5rem;
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+  }
+
+  .import-label {
+    font-weight: 700;
+    font-size: 0.95rem;
+  }
+
+  .format-hint {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 0.875rem 1rem;
+    font-family: var(--mono);
+    font-size: 0.78rem;
+    color: var(--muted);
+    line-height: 1.8;
+  }
+  .format-hint strong { color: var(--accent); }
+
+  #import-textarea {
+    width: 100%;
+    min-height: 180px;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 1rem;
+    color: var(--text);
+    font-family: var(--mono);
+    font-size: 0.85rem;
+    line-height: 1.7;
+    outline: none;
+    resize: vertical;
+    transition: border-color 0.15s;
+  }
+  #import-textarea:focus { border-color: var(--accent); }
+  #import-textarea::placeholder { color: var(--muted); }
+
+  .import-actions {
+    display: flex;
+    gap: 0.75rem;
+    flex-wrap: wrap;
+  }
+
+  .btn-file-label {
+    flex: 1; min-width: 160px;
+    display: flex; align-items: center; justify-content: center; gap: 0.4rem;
+    padding: 0.75rem 1rem;
+    border-radius: var(--radius);
+    border: 1px solid var(--border);
+    background: var(--surface2);
+    color: var(--text);
+    font-family: var(--font);
+    font-size: 0.875rem; font-weight: 700;
+    cursor: pointer; transition: all 0.15s;
+  }
+  .btn-file-label:hover { border-color: var(--accent); color: var(--accent); }
+  .btn-file-label input { display: none; }
+
+  .btn-parse {
+    flex: 1; min-width: 160px;
+    padding: 0.75rem 1rem;
+    border-radius: var(--radius); border: none;
+    background: var(--accent); color: #0d0d0f;
+    font-family: var(--font); font-size: 0.875rem; font-weight: 700;
+    cursor: pointer; transition: filter 0.15s;
+  }
+  .btn-parse:hover { filter: brightness(1.1); }
+
+  .file-name-hint {
+    font-family: var(--mono);
+    font-size: 0.75rem;
+    color: var(--accent);
+    min-height: 1rem;
+  }
+
+  /* import settings */
+  .import-settings {
+    margin-bottom: 1.5rem;
+  }
+
+  .settings-toggle {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    background: none;
+    border: none;
+    color: var(--muted);
+    font-family: var(--mono);
+    font-size: 0.75rem;
+    cursor: pointer;
+    padding: 0;
+    transition: color 0.15s;
+    margin-bottom: 0.75rem;
+  }
+  .settings-toggle:hover { color: var(--text); }
+  .settings-toggle .arr { transition: transform 0.2s; }
+  .settings-toggle.open .arr { transform: rotate(90deg); }
+
+  .settings-body {
+    display: none;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 1rem 1.25rem;
+    gap: 0.75rem;
+    flex-direction: column;
+  }
+  .settings-body.open { display: flex; }
+
+  .radio-group { display: flex; flex-direction: column; gap: 0.4rem; }
+  .radio-label {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-family: var(--mono);
+    font-size: 0.8rem;
+    color: var(--text);
+    cursor: pointer;
+  }
+  .radio-label input[type="radio"] { accent-color: var(--accent); }
+
+  .custom-delim-wrap {
+    display: none;
+    flex-direction: column;
+    gap: 0.4rem;
+    margin-top: 0.25rem;
+  }
+  .custom-delim-wrap.show { display: flex; }
+  .custom-delim-label { font-family: var(--mono); font-size: 0.72rem; color: var(--muted); }
+  .custom-delim-input {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 0.5rem 0.75rem;
+    color: var(--text);
+    font-family: var(--mono);
+    font-size: 0.85rem;
+    outline: none;
+    transition: border-color 0.15s;
+    max-width: 240px;
+  }
+  .custom-delim-input:focus { border-color: var(--accent); }
+
+  /* ══════════════════════════════════════
+     MODE TILES (on main page, below import)
+  ══════════════════════════════════════ */
+  .modes-section {
+    margin-bottom: 2rem;
+  }
+
+  .modes-section-title {
+    font-family: var(--mono);
+    font-size: 0.72rem;
+    color: var(--muted);
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    margin-bottom: 1rem;
+  }
+
+  /* DESKTOP TILES */
+  .mode-tiles {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(190px, 1fr));
+    gap: 0.75rem;
+  }
+
+  .mode-tile {
+    background: var(--glass-bg);
+    border: 1px solid var(--glass-border);
+    backdrop-filter: blur(14px) saturate(1.4);
+    -webkit-backdrop-filter: blur(14px) saturate(1.4);
+    box-shadow: var(--glass-shadow);
+    background-image: linear-gradient(135deg, var(--glass-shine) 0%, transparent 55%);
+    border-radius: 14px;
+    padding: 1.5rem 1.25rem;
+    cursor: pointer;
+    transition: all 0.18s;
+    display: flex;
+    flex-direction: column;
+    gap: 0.6rem;
+    position: relative;
+    overflow: hidden;
+  }
+  .mode-tile::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(135deg, transparent 70%, rgba(200,240,77,0.04) 100%);
+    pointer-events: none;
+  }
+  .mode-tile:hover {
+    border-color: var(--accent);
+    transform: translateY(-2px);
+    background: var(--glass-bg2);
+    box-shadow: var(--glass-shadow), 0 0 0 1px var(--accent) inset;
+  }
+  .mode-tile.disabled-tile {
+    opacity: 0.35;
+    cursor: not-allowed;
+    pointer-events: none;
+  }
+  .mode-tile.active-tile {
+    border-color: var(--accent);
+    background: var(--glass-bg2);
+    box-shadow: var(--glass-shadow), 0 0 0 1px var(--accent) inset;
+  }
+
+  .tile-icon { font-size: 1.75rem; }
+  .tile-name { font-weight: 700; font-size: 0.95rem; }
+  .tile-desc { font-family: var(--mono); font-size: 0.7rem; color: var(--muted); line-height: 1.5; }
+
+  /* MOBILE SELECT */
+  .mode-mobile-select-wrap { display: none; }
+  .mode-mobile-label {
+    font-family: var(--mono);
+    font-size: 0.72rem;
+    color: var(--muted);
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    margin-bottom: 0.5rem;
+  }
+  .mode-mobile-select {
+    width: 100%;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 0.875rem 1rem;
+    color: var(--text);
+    font-family: var(--font);
+    font-size: 1rem;
+    font-weight: 600;
+    outline: none;
+    appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%236b6b80' stroke-width='2' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 1rem center;
+    margin-bottom: 0.75rem;
+  }
+  .mode-mobile-select:focus { border-color: var(--accent); }
+
+  .btn-mobile-launch {
+    width: 100%;
+    padding: 1rem;
+    background: var(--accent);
+    color: #0d0d0f;
+    border: none;
+    border-radius: var(--radius);
+    font-family: var(--font);
+    font-size: 1rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: filter 0.15s;
+  }
+  .btn-mobile-launch:hover { filter: brightness(1.1); }
+
+  /* ══════════════════════════════════════
+     STATS MINI ROW (homepage)
+  ══════════════════════════════════════ */
+  .stats-row {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 0.6rem;
+    margin-bottom: 1.5rem;
+  }
+  .stat-mini {
+    background: var(--glass-bg);
+    border: 1px solid var(--glass-border);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    box-shadow: var(--glass-shadow);
+    background-image: linear-gradient(135deg, var(--glass-shine) 0%, transparent 55%);
+    border-radius: var(--radius);
+    padding: 0.875rem;
+    text-align: center;
+  }
+  .stat-mini-val {
+    font-size: 1.4rem;
+    font-weight: 800;
+    letter-spacing: -0.03em;
+  }
+  .stat-mini-lbl {
+    font-family: var(--mono);
+    font-size: 0.62rem;
+    color: var(--muted);
+    letter-spacing: 0.07em;
+    margin-top: 0.15rem;
+  }
+  .stat-total { color: var(--text); }
+  .stat-ok    { color: var(--correct); }
+  .stat-bad   { color: var(--wrong); }
+  .stat-pct   { color: var(--accent); }
+
+  /* ══════════════════════════════════════
+     MODE AREA (rendered content)
+  ══════════════════════════════════════ */
+  #mode-area { animation: fadeUp 0.2s ease; }
+  #mode-area:not(:empty) {
+    margin-top: 2rem;
+    padding-top: 2rem;
+    border-top: 1px solid var(--border);
+  }
+
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(10px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  /* ══════════════════════════════════════
+     CARD
+  ══════════════════════════════════════ */
+  .card {
+    background: var(--glass-bg);
+    border: 1px solid var(--glass-border);
+    backdrop-filter: blur(var(--glass-blur)) saturate(1.5);
+    -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(1.5);
+    box-shadow: var(--glass-shadow);
+    /* top-left shine streak */
+    background-image: linear-gradient(135deg, var(--glass-shine) 0%, transparent 50%);
+    border-radius: 16px;
+    padding: 2rem;
+    margin-bottom: 1rem;
+    animation: fadeUp 0.2s ease;
+  }
+
+  .card-label {
+    font-family: var(--mono);
+    font-size: 0.7rem;
+    color: var(--muted);
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    margin-bottom: 1rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .question-text {
+    font-size: clamp(1.05rem, 2.8vw, 1.4rem);
+    font-weight: 700;
+    line-height: 1.45;
+    margin-bottom: 1.5rem;
+    white-space: pre-line;
+  }
+
+  .answer-box {
+    background: var(--surface2);
+    border-radius: var(--radius);
+    padding: 1.25rem;
+    margin-bottom: 1rem;
+    display: none;
+    border-left: 3px solid var(--accent);
+  }
+  .answer-box.visible { display: block; animation: fadeUp 0.2s ease; }
+  .answer-label {
+    font-family: var(--mono);
+    font-size: 0.7rem;
+    color: var(--accent);
+    letter-spacing: 0.1em;
+    margin-bottom: 0.5rem;
+  }
+  .answer-text { font-size: 1rem; line-height: 1.6; white-space: pre-line; }
+
+  /* ══════════════════════════════════════
+     INPUT
+  ══════════════════════════════════════ */
+  .input-wrap { margin-bottom: 1rem; }
+  .answer-input {
+    width: 100%;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 0.875rem 1rem;
+    color: var(--text);
+    font-family: var(--font);
+    font-size: 0.95rem;
+    outline: none;
+    transition: border-color 0.15s;
+  }
+  .answer-input:focus { border-color: var(--accent); }
+  .answer-input.correct { border-color: var(--correct); background: #0d2018; }
+  .answer-input.wrong   { border-color: var(--wrong);   background: #200d0d; }
+
+  .check-result {
+    margin-top: 0.5rem;
+    font-family: var(--mono);
+    font-size: 0.82rem;
+    display: none;
+  }
+  .check-result.correct { color: var(--correct); display: block; }
+  .check-result.wrong   { color: var(--wrong);   display: block; }
+
+  /* ══════════════════════════════════════
+     BUTTONS
+  ══════════════════════════════════════ */
+  .btn-row { display: flex; gap: 0.5rem; flex-wrap: wrap; }
+
+  .btn {
+    flex: 1; min-width: 100px;
+    padding: 0.75rem 1rem;
+    border-radius: var(--radius); border: none;
+    font-family: var(--font); font-size: 0.875rem; font-weight: 700;
+    cursor: pointer; transition: all 0.15s;
+    white-space: nowrap;
+  }
+  .btn-primary { background: var(--accent);  color: #0d0d0f; }
+  .btn-primary:hover  { filter: brightness(1.1); }
+  .btn-success { background: var(--correct); color: #0d2018; }
+  .btn-success:hover  { filter: brightness(1.1); }
+  .btn-danger  { background: var(--wrong);   color: #200d0d; }
+  .btn-danger:hover   { filter: brightness(1.1); }
+  .btn-ghost   { background: var(--surface2); color: var(--text); border: 1px solid var(--border); }
+  .btn-ghost:hover    { border-color: var(--accent); color: var(--accent); }
+  .btn-info    { background: var(--accent3); color: #0d1a20; }
+  .btn-info:hover     { filter: brightness(1.1); }
+  .btn-warn    { background: #f0a030; color: #1a0d00; }
+  .btn-warn:hover     { filter: brightness(1.1); }
+  .btn:disabled { opacity: 0.35; cursor: not-allowed; filter: none !important; }
+
+  /* ══════════════════════════════════════
+     PROGRESS BAR
+  ══════════════════════════════════════ */
+  .progress-wrap { margin-bottom: 1.5rem; }
+  .progress-bar { height: 4px; background: var(--surface2); border-radius: 99px; overflow: hidden; }
+  .progress-fill { height: 100%; background: var(--accent); border-radius: 99px; transition: width 0.4s cubic-bezier(.4,0,.2,1); }
+  .progress-meta {
+    display: flex; justify-content: space-between;
+    font-family: var(--mono); font-size: 0.75rem; color: var(--muted); margin-top: 0.4rem;
+  }
+
+  /* ══════════════════════════════════════
+     STATS GRID
+  ══════════════════════════════════════ */
+  .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 1rem; margin-bottom: 1.5rem; }
+  .stat-card {
+    background: var(--glass-bg);
+    border: 1px solid var(--glass-border);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    box-shadow: var(--glass-shadow);
+    background-image: linear-gradient(135deg, var(--glass-shine) 0%, transparent 55%);
+    border-radius: var(--radius); padding: 1.25rem; text-align: center;
+  }
+  .stat-value { font-size: 2rem; font-weight: 800; letter-spacing: -0.04em; margin-bottom: 0.25rem; }
+  .stat-label { font-family: var(--mono); font-size: 0.72rem; color: var(--muted); letter-spacing: 0.07em; }
+  .hardest-title { font-weight: 700; font-size: 0.9rem; margin-bottom: 0.75rem; color: var(--muted); font-family: var(--mono); letter-spacing: 0.06em; text-transform: uppercase; }
+  .hardest-item {
+    background: var(--glass-bg); border: 1px solid var(--glass-border);
+    backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+    border-radius: var(--radius);
+    padding: 0.875rem 1rem; margin-bottom: 0.5rem;
+    display: flex; align-items: center; gap: 1rem;
+    cursor: pointer; transition: border-color 0.15s;
+  }
+  .hardest-item:hover { border-color: var(--accent); }
+  .hardest-q { flex: 1; font-size: 0.875rem; }
+  .hardest-badge { background: var(--wrong); color: #fff; border-radius: 6px; padding: 0.2rem 0.5rem; font-family: var(--mono); font-size: 0.7rem; white-space: nowrap; }
+
+  /* ══════════════════════════════════════
+     LIST / SEARCH
+  ══════════════════════════════════════ */
+  .search-input {
+    width: 100%; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius);
+    padding: 0.875rem 1rem; color: var(--text); font-family: var(--font); font-size: 0.95rem;
+    outline: none; transition: border-color 0.15s; margin-bottom: 1rem;
+  }
+  .search-input:focus { border-color: var(--accent); }
+  .search-input::placeholder { color: var(--muted); }
+  .q-list { display: flex; flex-direction: column; gap: 0.4rem; }
+  .q-list-item {
+    background: var(--glass-bg); border: 1px solid var(--glass-border);
+    backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+    border-radius: var(--radius);
+    padding: 0.875rem 1rem; cursor: pointer; transition: all 0.15s;
+    display: flex; align-items: center; gap: 0.75rem;
+  }
+  .q-list-item:hover { border-color: var(--accent); transform: translateX(3px); background: var(--glass-bg2); }
+  .q-list-item .q-idx { font-family: var(--mono); font-size: 0.7rem; color: var(--muted); min-width: 24px; }
+  .q-list-item .q-text { flex: 1; font-size: 0.875rem; }
+  .q-list-item .q-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--border); flex-shrink: 0; }
+  .q-list-item .q-dot.ok  { background: var(--correct); }
+  .q-list-item .q-dot.bad { background: var(--wrong); }
+
+  /* ══════════════════════════════════════
+     TEST MODE
+  ══════════════════════════════════════ */
+  .test-options { display: flex; flex-direction: column; gap: 0.5rem; margin-bottom: 1rem; }
+  .test-option {
+    background: var(--surface2); border: 2px solid var(--border);
+    border-radius: var(--radius); padding: 1rem 1.25rem;
+    cursor: pointer; transition: all 0.15s;
+    font-size: 0.9rem; line-height: 1.4; text-align: left;
+  }
+  .test-option:hover { border-color: var(--accent3); color: var(--accent3); }
+  .test-option.selected-correct { border-color: var(--correct); background: #0d2018; color: var(--correct); }
+  .test-option.selected-wrong   { border-color: var(--wrong);   background: #200d0d; color: var(--wrong); }
+  .test-option.reveal-correct   { border-color: var(--correct); background: #0d2018; color: var(--correct); }
+  .test-option:disabled { cursor: not-allowed; }
+
+  /* ══════════════════════════════════════
+     CLOZE MODE
+  ══════════════════════════════════════ */
+  .cloze-text {
+    font-size: clamp(1rem, 2.5vw, 1.15rem);
+    line-height: 2;
+    margin-bottom: 1.5rem;
+  }
+  .cloze-blank {
+    display: inline-block;
+    min-width: 80px; height: 1.5em;
+    border-bottom: 2px solid var(--accent);
+    background: transparent; color: var(--text);
+    font-family: var(--font); font-size: inherit;
+    text-align: center; outline: none;
+    padding: 0 4px; vertical-align: bottom;
+    transition: border-color 0.15s;
+  }
+  .cloze-blank:focus { border-color: var(--accent3); }
+  .cloze-blank.correct-blank { border-color: var(--correct); color: var(--correct); }
+  .cloze-blank.wrong-blank   { border-color: var(--wrong);   color: var(--wrong); }
+  .cloze-blank.revealed-blank { border-color: var(--muted); color: var(--muted); background: var(--surface2); }
+
+  .cloze-warning {
+    background: var(--surface2); border: 1px solid #f0a030;
+    border-radius: var(--radius); padding: 1rem 1.25rem;
+    font-family: var(--mono); font-size: 0.82rem; color: #f0a030;
+    margin-bottom: 1rem; line-height: 1.6;
+  }
+  .cloze-mode-toggle { display: flex; gap: 0.5rem; margin-bottom: 1rem; }
+  .cloze-toggle-btn {
+    flex: 1; padding: 0.5rem; border-radius: 8px;
+    border: 1px solid var(--border); background: var(--surface2);
+    color: var(--muted); font-family: var(--font); font-size: 0.8rem; font-weight: 600;
+    cursor: pointer; transition: all 0.15s;
+  }
+  .cloze-toggle-btn.active { border-color: var(--accent); color: var(--accent); background: #1a1f10; }
+
+  /* ── cloze markup editor ── */
+  .cloze-editor-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.55);
+    backdrop-filter: blur(10px) saturate(1.2);
+    -webkit-backdrop-filter: blur(10px) saturate(1.2);
+    z-index: 400;
+    align-items: center;
+    justify-content: center;
+    padding: 1.5rem;
+  }
+  .cloze-editor-overlay.open { display: flex; }
+
+  .cloze-editor-modal {
+    background: var(--glass-bg2);
+    border: 1px solid var(--glass-border);
+    backdrop-filter: blur(24px) saturate(1.8);
+    -webkit-backdrop-filter: blur(24px) saturate(1.8);
+    box-shadow: var(--glass-shadow), 0 1px 0 var(--glass-shine) inset;
+    background-image: linear-gradient(135deg, var(--glass-shine) 0%, transparent 45%);
+    border-radius: 16px;
+    padding: 2rem;
+    max-width: 600px;
+    width: 100%;
+    max-height: 85vh;
+    overflow-y: auto;
+    animation: fadeUp 0.2s ease;
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+  }
+
+  .cloze-editor-title {
+    font-weight: 800;
+    font-size: 1.1rem;
+    letter-spacing: -0.02em;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+
+  .cloze-editor-hint {
+    font-family: var(--mono);
+    font-size: 0.75rem;
+    color: var(--muted);
+    background: var(--surface2);
+    border-radius: 8px;
+    padding: 0.75rem 1rem;
+    line-height: 1.7;
+  }
+  .cloze-editor-hint strong { color: var(--accent); }
+
+  .cloze-editor-textarea {
+    width: 100%;
+    min-height: 180px;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 1rem;
+    color: var(--text);
+    font-family: var(--mono);
+    font-size: 0.85rem;
+    line-height: 1.8;
+    outline: none;
+    resize: vertical;
+    transition: border-color 0.15s;
+  }
+  .cloze-editor-textarea:focus { border-color: var(--accent); }
+
+  /* ══════════════════════════════════════
+     EXAM MODE
+  ══════════════════════════════════════ */
+  .exam-timer {
+    font-family: var(--mono); font-size: 2rem; font-weight: 700;
+    color: var(--accent); letter-spacing: 0.05em; margin-bottom: 0.5rem;
+  }
+  .exam-timer.warning { color: var(--wrong); animation: pulse 1s infinite; }
+  @keyframes pulse { 0%,100% { opacity:1; } 50% { opacity:0.5; } }
+
+  .exam-results { animation: fadeUp 0.3s ease; }
+  .exam-result-row {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 0.75rem 1rem; border-bottom: 1px solid var(--border); font-size: 0.875rem;
+  }
+  .exam-result-row:last-child { border-bottom: none; }
+  .exam-result-q { flex: 1; color: var(--muted); }
+  .exam-result-badge { padding: 0.2rem 0.5rem; border-radius: 6px; font-family: var(--mono); font-size: 0.7rem; font-weight: 700; }
+  .badge-ok  { background: #0d2018; color: var(--correct); }
+  .badge-bad { background: #200d0d; color: var(--wrong); }
+
+  /* ══════════════════════════════════════
+     ERRORS MODE
+  ══════════════════════════════════════ */
+  .errors-empty { text-align: center; padding: 3rem 2rem; font-family: var(--mono); color: var(--correct); font-size: 1rem; }
+
+  /* ══════════════════════════════════════
+     SECTION HEADING
+  ══════════════════════════════════════ */
+  .section-title { font-weight: 800; font-size: 1.4rem; letter-spacing: -0.03em; margin-bottom: 0.4rem; }
+  .section-sub { font-family: var(--mono); font-size: 0.78rem; color: var(--muted); margin-bottom: 1.5rem; }
+
+  /* ══════════════════════════════════════
+     MODAL (question details)
+  ══════════════════════════════════════ */
+  .modal-overlay {
+    display: none; position: fixed; inset: 0;
+    background: rgba(0,0,0,0.55);
+    backdrop-filter: blur(10px) saturate(1.2);
+    -webkit-backdrop-filter: blur(10px) saturate(1.2);
+    z-index: 300;
+    align-items: center; justify-content: center; padding: 1.5rem;
+  }
+  .modal-overlay.open { display: flex; }
+  .modal {
+    background: var(--glass-bg2);
+    border: 1px solid var(--glass-border);
+    backdrop-filter: blur(24px) saturate(1.8);
+    -webkit-backdrop-filter: blur(24px) saturate(1.8);
+    box-shadow: var(--glass-shadow), 0 1px 0 var(--glass-shine) inset;
+    background-image: linear-gradient(135deg, var(--glass-shine) 0%, transparent 45%);
+    border-radius: 16px; padding: 2rem; max-width: 500px; width: 100%;
+    animation: fadeUp 0.2s ease; max-height: 80vh; overflow-y: auto;
+  }
+  .modal h3 { font-size: 1.15rem; font-weight: 700; margin-bottom: 1rem; }
+  .modal .answer-text { font-size: 0.95rem; line-height: 1.6; color: var(--muted); margin-bottom: 1.5rem; white-space: pre-line; }
+  .modal-close {
+    background: var(--surface2); border: 1px solid var(--border); color: var(--text);
+    padding: 0.6rem 1.2rem; border-radius: var(--radius);
+    cursor: pointer; font-family: var(--font); font-size: 0.85rem; font-weight: 600; transition: all 0.15s;
+  }
+  .modal-close:hover { border-color: var(--accent); color: var(--accent); }
+
+  /* ══════════════════════════════════════
+     DOCS MODAL
+  ══════════════════════════════════════ */
+  .docs-overlay {
+    display: none; position: fixed; inset: 0;
+    background: rgba(0,0,0,0.55);
+    backdrop-filter: blur(10px) saturate(1.2);
+    -webkit-backdrop-filter: blur(10px) saturate(1.2);
+    z-index: 400;
+    align-items: flex-start; justify-content: center;
+    padding: 1.5rem; overflow-y: auto;
+  }
+  .docs-overlay.open { display: flex; }
+  .docs-modal {
+    background: var(--glass-bg2); border: 1px solid var(--glass-border);
+    backdrop-filter: blur(28px) saturate(1.8);
+    -webkit-backdrop-filter: blur(28px) saturate(1.8);
+    box-shadow: var(--glass-shadow), 0 1px 0 var(--glass-shine) inset;
+    background-image: linear-gradient(135deg, var(--glass-shine) 0%, transparent 40%);
+    border-radius: 16px; padding: 2rem; max-width: 660px; width: 100%;
+    animation: fadeUp 0.2s ease; margin: auto;
+  }
+  .docs-modal h1 {
+    font-size: 1.5rem; font-weight: 800; letter-spacing: -0.04em;
+    margin-bottom: 0.25rem;
+  }
+  .docs-modal h1 span { color: var(--accent); }
+  .docs-tagline {
+    font-family: var(--mono); font-size: 0.75rem; color: var(--muted);
+    margin-bottom: 2rem;
+  }
+  .docs-modal h2 {
+    font-size: 0.72rem; font-family: var(--mono); letter-spacing: 0.1em;
+    text-transform: uppercase; color: var(--muted); margin: 1.75rem 0 0.75rem;
+    padding-bottom: 0.4rem; border-bottom: 1px solid var(--border);
+  }
+  .docs-modal p {
+    font-size: 0.88rem; line-height: 1.65; color: var(--text);
+    margin-bottom: 0.6rem;
+  }
+  .docs-modal code {
+    font-family: var(--mono); font-size: 0.82rem;
+    background: var(--surface2); border: 1px solid var(--border);
+    border-radius: 4px; padding: 0.1em 0.4em; color: var(--accent);
+  }
+  .docs-codeblock {
+    font-family: var(--mono); font-size: 0.78rem; line-height: 1.7;
+    background: var(--surface2); border: 1px solid var(--border);
+    border-radius: var(--radius); padding: 0.875rem 1rem;
+    color: var(--muted); margin: 0.5rem 0 0.75rem;
+    white-space: pre; overflow-x: auto;
+  }
+  .docs-codeblock strong { color: var(--accent); }
+  .docs-mode-list {
+    display: flex; flex-direction: column; gap: 0.5rem; margin-bottom: 0.5rem;
+  }
+  .docs-mode-item {
+    background: var(--surface2); border: 1px solid var(--border);
+    border-radius: var(--radius); padding: 0.75rem 1rem;
+    display: flex; gap: 0.75rem; align-items: flex-start;
+  }
+  .docs-mode-icon { font-size: 1.2rem; flex-shrink: 0; line-height: 1.4; }
+  .docs-mode-body {}
+  .docs-mode-name { font-weight: 700; font-size: 0.9rem; margin-bottom: 0.2rem; }
+  .docs-mode-desc { font-family: var(--mono); font-size: 0.72rem; color: var(--muted); line-height: 1.5; }
+  .docs-table {
+    width: 100%; border-collapse: collapse; font-size: 0.82rem; margin-bottom: 0.5rem;
+  }
+  .docs-table th {
+    font-family: var(--mono); font-size: 0.68rem; letter-spacing: 0.08em;
+    color: var(--muted); text-align: left; padding: 0.4rem 0.75rem;
+    border-bottom: 1px solid var(--border);
+  }
+  .docs-table td {
+    padding: 0.5rem 0.75rem; border-bottom: 1px solid var(--border);
+    vertical-align: top; line-height: 1.5;
+  }
+  .docs-table tr:last-child td { border-bottom: none; }
+  .docs-close-row {
+    margin-top: 2rem; display: flex; justify-content: flex-end;
+  }
+
+  @media (max-width: 767px) {
+    .docs-modal { padding: 1.25rem; }
+  }
+  .empty { text-align: center; padding: 4rem 2rem; color: var(--muted); font-family: var(--mono); }
+  .empty .big { font-size: 3rem; margin-bottom: 1rem; }
+
+  .app-footer {
+    text-align: center; padding: 1rem 1.5rem;
+    border-top: 1px solid var(--border);
+    font-family: var(--mono); font-size: 0.7rem; color: var(--muted); letter-spacing: 0.04em;
+  }
+  .app-footer span { color: var(--accent); }
+
+  /* ══════════════════════════════════════
+     MOBILE SELECT SELECT
+  ══════════════════════════════════════ */
+  .mobile-select {
+    width: 100%;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 0.875rem 1rem;
+    color: var(--text);
+    font-family: var(--font); font-size: 1rem; font-weight: 600;
+    outline: none; appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%236b6b80' stroke-width='2' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 1rem center;
+  }
+  .mobile-select:focus { border-color: var(--accent); }
+
+  /* ══════════════════════════════════════
+     RESPONSIVE
+  ══════════════════════════════════════ */
+  @media (max-width: 767px) {
+    .mode-tiles { display: none; }
+    .mode-mobile-select-wrap { display: block; }
+    .site-header { padding: 0.6rem 0.875rem; gap: 0.4rem; }
+    .logo { font-size: 1.05rem; }
+    .q-counter { display: none; }
+    .btn-sm { display: none; }
+    .btn-sm.icon-only { display: flex; padding: 0.35rem 0.5rem; font-size: 0.85rem; }
+    .btn-sm .btn-label { display: none; }
+    .info-panel { padding: 0.4rem 1rem; gap: 0.6rem; }
+    .info-panel .info-q { font-size: 0.65rem; }
+    .content-area { padding: 1rem; }
+    .card { padding: 1.25rem; border-radius: 12px; }
+    .question-text { font-size: 1.05rem; margin-bottom: 1rem; word-break: break-word; }
+    .answer-text { font-size: 0.875rem; word-break: break-word; }
+    .answer-box { padding: 1rem; }
+    .btn-row { flex-direction: column; gap: 0.4rem; }
+    .btn { min-width: unset; width: 100%; font-size: 0.95rem; padding: 0.85rem 1rem; }
+    .answer-input { font-size: 1rem; }
+    .stats-grid { grid-template-columns: repeat(2, 1fr); gap: 0.6rem; }
+    .stat-value { font-size: 1.6rem; }
+    .modal { padding: 1.25rem; border-radius: 12px; }
+    .stats-row { grid-template-columns: repeat(2, 1fr); }
+    .landing-hero { padding: 2.5rem 1rem 1.5rem; }
+    .landing-logo { font-size: 2.5rem; }
+    .import-actions { flex-direction: column; gap: 0.5rem; }
+    .btn-file-label, .btn-parse { min-width: unset; width: 100%; }
+    .cloze-editor-modal { padding: 1.25rem; }
+  }
+
+  @media (min-width: 768px) {
+    .mode-mobile-select-wrap { display: none; }
+  }
+
+  /* ══════════════════════════════════════
+     THEME SWITCHER
+  ══════════════════════════════════════ */
+  .theme-switcher {
+    position: relative;
+  }
+
+  .theme-btn {
+    font-size: 1rem;
+    padding: 0.3rem 0.5rem;
+    line-height: 1;
+  }
+
+  .theme-dropdown {
+    display: none;
+    position: fixed;
+    top: 52px;
+    right: 0.75rem;
+    background: rgba(18, 18, 24, 0.55);
+    border: 1px solid rgba(255,255,255,0.13);
+    backdrop-filter: blur(28px) saturate(1.8);
+    -webkit-backdrop-filter: blur(28px) saturate(1.8);
+    border-radius: 14px;
+    padding: 0.4rem;
+    min-width: 168px;
+    z-index: 999;
+    box-shadow: 0 12px 40px rgba(0,0,0,0.55), 0 1px 0 rgba(255,255,255,0.09) inset;
+    background-image: linear-gradient(135deg, rgba(255,255,255,0.07) 0%, transparent 55%);
+    flex-direction: column;
+    gap: 2px;
+  }
+  .theme-dropdown.open { display: flex; }
+
+  .theme-option {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    background: none;
+    border: none;
+    color: rgba(220, 220, 240, 0.92);
+    font-family: var(--font);
+    font-size: 0.8rem;
+    font-weight: 600;
+    padding: 0.45rem 0.7rem;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: background 0.12s, color 0.12s;
+    text-align: left;
+    width: 100%;
+  }
+  .theme-option:hover { background: rgba(255,255,255,0.09); color: #fff; }
+  .theme-option.active { background: rgba(255,255,255,0.12); color: #c8f04d; }
+
+  .theme-dot {
+    width: 9px; height: 9px;
+    border-radius: 50%;
+    flex-shrink: 0;
+  }
+  .dark-dot   { background: #c8f04d; box-shadow: 0 0 4px #c8f04d66; }
+  .light-dot  { background: #5a9e00; box-shadow: 0 0 4px #5a9e0066; }
+  .purple-dot { background: #b06dff; box-shadow: 0 0 4px #b06dff66; }
+  .red-dot    { background: #ff4d4d; box-shadow: 0 0 4px #ff4d4d66; }
+</style>
+</head>
+<body>
+
+<!-- ════════════════ HEADER ════════════════ -->
+<header class="site-header">
+  <div class="header-left">
+    <div class="logo" onclick="goHome()">Exam<span>Flow</span></div>
+    <div class="q-counter" id="q-counter"></div>
+  </div>
+
+  <div class="header-right">
+    <!-- Theme switcher -->
+    <div class="theme-switcher" id="theme-switcher">
+      <button class="btn-sm icon-only theme-btn" onclick="toggleThemeMenu(event)" title="Тема оформления">🎨</button>
+      <div class="theme-dropdown" id="theme-dropdown">
+        <button class="theme-option" data-theme="dark"   onclick="setTheme('dark')">  <span class="theme-dot dark-dot"></span>  Тёмная</button>
+        <button class="theme-option" data-theme="light"  onclick="setTheme('light')"> <span class="theme-dot light-dot"></span> Светлая</button>
+        <button class="theme-option" data-theme="purple" onclick="setTheme('purple')"><span class="theme-dot purple-dot"></span> Фиолетовая</button>
+        <button class="theme-option" data-theme="red"    onclick="setTheme('red')">   <span class="theme-dot red-dot"></span>   Красная</button>
+      </div>
+    </div>
+    <button class="btn-sm icon-only" onclick="openDocs()" title="Документация">?<span class="btn-label"> Помощь</span></button>
+    <button class="btn-sm icon-only" onclick="exportToTxt()" title="Экспорт">↓<span class="btn-label"> Экспорт</span></button>
+    <button class="btn-sm danger icon-only" onclick="resetAll()" title="Сброс">↩<span class="btn-label"> Сброс</span></button>
+  </div>
+</header>
+
+<!-- ════════════════ INFO PANEL ════════════════ -->
+<div class="info-panel" id="info-panel">
+  <div class="info-q" id="info-q-text">Вопрос <strong>—</strong></div>
+  <div class="info-progress-wrap">
+    <div class="info-bar"><div class="info-bar-fill" id="info-bar-fill" style="width:0%"></div></div>
+    <div class="info-pct" id="info-pct">0%</div>
+  </div>
+  <div class="info-mode-badge">
+    <div class="info-dot"></div>
+    <span id="info-mode-name">—</span>
+  </div>
+</div>
+
+<!-- ════════════════ PAGE ════════════════ -->
+<div class="page">
+  <div class="content-area">
+
+    <!-- ── LANDING (import + mode tiles) ── -->
+    <div id="landing">
+      <div class="landing-hero">
+        <div class="landing-logo">Exam<span>Flow</span></div>
+        <div class="landing-tagline">// интерактивный тренажёр для экзаменов</div>
+        <div class="author-tag">Дизайн и разработка: <span>Тимофей</span>, 106 группа, педиатрический факультет</div>
+      </div>
+
+      <div class="import-card">
+        <div class="import-label">📥 Вставьте текст или загрузите файл</div>
+        <div class="format-hint">
+          <strong>📌 Поддерживаемый формат:</strong><br>
+          Вопрос 1. Морфологические особенности насекомых<br>
+          Тело насекомых разделено на голову, грудь и брюшко...<br><br>
+          Вопрос 2. Отряд вши: особенности и развитие<br>
+          Постоянные эктопаразиты, питаются кровью...<br>
+          <span style="color:var(--muted);font-size:0.75rem">Каждый блок «Вопрос N.» = отдельная карточка</span>
+        </div>
+        <textarea id="import-textarea" placeholder="Вставьте билеты сюда...&#10;&#10;Вопрос 1. Название вопроса&#10;Текст ответа на первый вопрос...&#10;&#10;Вопрос 2. Название второго вопроса&#10;Текст ответа на второй вопрос..."></textarea>
+        <div class="import-actions">
+          <label class="btn-file-label">
+            📂 Выбрать файл (.txt)
+            <input type="file" id="file-input" accept=".txt">
+          </label>
+          <button class="btn-parse" onclick="parseAndLoad()">▶ Разобрать</button>
+        </div>
+        <div id="file-name" class="file-name-hint"></div>
+      </div>
+
+      <!-- ⚙ Import settings -->
+      <div class="import-settings">
+        <button class="settings-toggle" id="settings-toggle" onclick="toggleSettings()">
+          <span class="arr">▶</span> ⚙ Настройки импорта
+        </button>
+        <div class="settings-body" id="settings-body">
+          <div class="radio-group">
+            <label class="radio-label">
+              <input type="radio" name="delim" value="auto" checked onchange="onDelimChange(this)">
+              Авто (Вопрос N.)
+            </label>
+            <label class="radio-label">
+              <input type="radio" name="delim" value="custom" onchange="onDelimChange(this)">
+              Кастомный разделитель
+            </label>
+          </div>
+          <div class="custom-delim-wrap" id="custom-delim-wrap">
+            <div class="custom-delim-label">Разделитель:</div>
+            <input class="custom-delim-input" id="custom-delim" type="text" placeholder="Например: ---">
+          </div>
+        </div>
+      </div>
+
+      <!-- modes section -->
+      <div class="modes-section" id="modes-section">
+        <div class="modes-section-title">Режимы обучения</div>
+
+        <!-- stats row (hidden until questions loaded) -->
+        <div class="stats-row" id="stats-row" style="display:none"></div>
+
+        <!-- desktop tiles -->
+        <div class="mode-tiles" id="mode-tiles"></div>
+
+        <!-- mobile select -->
+        <div class="mode-mobile-select-wrap" id="mobile-modes-wrap">
+          <select class="mode-mobile-select" id="mobile-mode-select"></select>
+          <button class="btn-mobile-launch" onclick="launchMobileMode()">▶ Начать</button>
+        </div>
+      </div>
+    </div>
+    <!-- /landing -->
+
+    <!-- ── MODE CONTENT ── -->
+    <div id="mode-area"></div>
+
+  </div>
+</div>
+
+<!-- ════════════════ MODAL ════════════════ -->
+<div class="modal-overlay" id="modal-overlay" onclick="closeModal(event)">
+  <div class="modal">
+    <h3 id="modal-q"></h3>
+    <div class="answer-text" id="modal-a"></div>
+    <button class="modal-close" onclick="closeModal()">Закрыть</button>
+  </div>
+</div>
+
+<!-- ════════════════ CLOZE EDITOR ════════════════ -->
+<div class="cloze-editor-overlay" id="cloze-editor-overlay">
+  <div class="cloze-editor-modal">
+    <div class="cloze-editor-title">✏ Разметить пропуски</div>
+    <div class="cloze-editor-hint">
+      Оберните слова, которые нужно скрыть, в двойные звёздочки:<br>
+      <strong>**важное слово**</strong> → станет пропуском в режиме Пропуски.<br>
+      Остальной текст останется видимым.
+    </div>
+    <textarea class="cloze-editor-textarea" id="cloze-editor-ta"></textarea>
+    <div class="btn-row">
+      <button class="btn btn-ghost" onclick="closeClozeEditor()">Отмена</button>
+      <button class="btn btn-primary" onclick="saveClozeMarkup()">💾 Сохранить разметку</button>
+    </div>
+  </div>
+</div>
+
+<!-- ════════════════ DOCS MODAL ════════════════ -->
+<div class="docs-overlay" id="docs-overlay" onclick="if(event.target===this)closeDocs()">
+  <div class="docs-modal">
+    <h1>Exam<span>Flow</span></h1>
+    <div class="docs-tagline">// интерактивный тренажёр для экзаменов · Тимофей, 106 группа</div>
+
+    <h2>Быстрый старт</h2>
+    <p>Вставьте текст с вопросами в поле ввода или загрузите <code>.txt</code> файл → нажмите <code>▶ Разобрать</code> → выберите режим. Прогресс сохраняется автоматически.</p>
+
+    <h2>Формат вопросов</h2>
+    <p><strong>Стандартный (авто)</strong> — каждый блок начинается со слова «Вопрос N.»:</p>
+    <div class="docs-codeblock"><strong>Вопрос 1.</strong> Морфологические особенности насекомых
+Тело разделено на голову, грудь и брюшко...
+
+<strong>Вопрос 2.</strong> Отряд вши
+Постоянные эктопаразиты, питаются кровью...</div>
+    <p><strong>Кастомный разделитель</strong> — откройте ⚙ Настройки импорта и укажите свой. Например, разделитель <code>---</code>:</p>
+    <div class="docs-codeblock">Что такое фагоцитоз?
+Процесс поглощения клеткой твёрдых частиц
+<strong>---</strong>
+Что такое пиноцитоз?
+Процесс поглощения клеткой жидкости</div>
+    <p>Первая строка каждого блока → вопрос, остальное → ответ.</p>
+
+    <h2>Импорт</h2>
+    <table class="docs-table">
+      <tr><th>Способ</th><th>Описание</th></tr>
+      <tr><td>Вставить текст</td><td>Скопируйте билеты и вставьте в поле</td></tr>
+      <tr><td>Выбрать файл</td><td>Загрузите <code>.txt</code> через диалог</td></tr>
+      <tr><td>Перетащить файл</td><td>Бросьте <code>.txt</code> прямо на блок импорта (desktop)</td></tr>
+    </table>
+    <p>При повторном импорте того же текста статистика сохраняется — вопросы с совпадающим заголовком не обнуляются.</p>
+
+    <h2>Режимы обучения</h2>
+    <div class="docs-mode-list">
+      <div class="docs-mode-item">
+        <div class="docs-mode-icon">🃏</div>
+        <div class="docs-mode-body">
+          <div class="docs-mode-name">Карточки</div>
+          <div class="docs-mode-desc">Читаете вопрос → вспоминаете → открываете ответ → оцениваете «Знал / Не знал». Вопросы с ошибками встречаются чаще.</div>
+        </div>
+      </div>
+      <div class="docs-mode-item">
+        <div class="docs-mode-icon">✏️</div>
+        <div class="docs-mode-body">
+          <div class="docs-mode-name">Ввод ответа</div>
+          <div class="docs-mode-desc">Печатаете ответ вручную. Засчитывается если совпадает, содержится или включает ≥60% правильного.</div>
+        </div>
+      </div>
+      <div class="docs-mode-item">
+        <div class="docs-mode-icon">🔲</div>
+        <div class="docs-mode-body">
+          <div class="docs-mode-name">Пропуски</div>
+          <div class="docs-mode-desc">Заполняете пропуски в тексте. Ручной режим: разметьте слова через <code>**слово**</code> в редакторе (кнопка ✏ Разметить). Авто: каждое 3-е слово скрывается автоматически.</div>
+        </div>
+      </div>
+      <div class="docs-mode-item">
+        <div class="docs-mode-icon">📝</div>
+        <div class="docs-mode-body">
+          <div class="docs-mode-name">Тест</div>
+          <div class="docs-mode-desc">4 варианта ответа: 1 правильный + 3 случайных из других вопросов. Нужно минимум 2 вопроса.</div>
+        </div>
+      </div>
+      <div class="docs-mode-item">
+        <div class="docs-mode-icon">⏱</div>
+        <div class="docs-mode-body">
+          <div class="docs-mode-name">Экзамен</div>
+          <div class="docs-mode-desc">Таймер на каждый вопрос (1–30 мин). Ответ скрыт до нажатия «Показать эталон». Время вышло — автоматическая ошибка. В конце — итоговая таблица.</div>
+        </div>
+      </div>
+      <div class="docs-mode-item">
+        <div class="docs-mode-icon">❌</div>
+        <div class="docs-mode-body">
+          <div class="docs-mode-name">Ошибки</div>
+          <div class="docs-mode-desc">Только вопросы, где ошибок больше чем верных ответов.</div>
+        </div>
+      </div>
+      <div class="docs-mode-item">
+        <div class="docs-mode-icon">📋</div>
+        <div class="docs-mode-body">
+          <div class="docs-mode-name">Все вопросы</div>
+          <div class="docs-mode-desc">Живой поиск по всей базе. Цвет точки: 🟢 больше верных, 🔴 больше ошибок, ⚫ не изучался. Клик → полный текст.</div>
+        </div>
+      </div>
+    </div>
+
+    <h2>Статистика</h2>
+    <p>Мини-статистика на главной: всего вопросов, верных, ошибок, % успеха. Вопросы с большим числом ошибок всплывают чаще (взвешенный выбор).</p>
+
+    <h2>Экспорт и сброс</h2>
+    <p><code>↓ Экспорт</code> — скачивает все вопросы в <code>.txt</code>, совместимом с повторным импортом.<br>
+    <code>↩ Сброс</code> — удаляет все вопросы и статистику после подтверждения. Необратимо.</p>
+
+    <div class="docs-close-row">
+      <button class="modal-close" onclick="closeDocs()">Закрыть</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ═══════════════════════════════════════════════
+//  THEME
+// ═══════════════════════════════════════════════
+const LS_THEME = 'examflow_theme';
+
+function setTheme(name) {
+  const html = document.documentElement;
+  if (name === 'dark') {
+    html.removeAttribute('data-theme');
+  } else {
+    html.setAttribute('data-theme', name);
+  }
+  localStorage.setItem(LS_THEME, name);
+  // update active state
+  document.querySelectorAll('.theme-option').forEach(btn => {
+    btn.classList.toggle('active', btn.dataset.theme === name);
+  });
+  closeThemeMenu();
+}
+
+function toggleThemeMenu(e) {
+  e.stopPropagation();
+  document.getElementById('theme-dropdown').classList.toggle('open');
+}
+
+function closeThemeMenu() {
+  document.getElementById('theme-dropdown').classList.remove('open');
+}
+
+// Close on outside click
+document.addEventListener('click', function(e) {
+  if (!document.getElementById('theme-switcher').contains(e.target)) {
+    closeThemeMenu();
+  }
+});
+
+// Apply saved theme on load
+(function() {
+  const saved = localStorage.getItem(LS_THEME) || 'dark';
+  if (saved !== 'dark') document.documentElement.setAttribute('data-theme', saved);
+  // mark active after DOM ready
+  document.addEventListener('DOMContentLoaded', () => {
+    document.querySelectorAll('.theme-option').forEach(btn => {
+      btn.classList.toggle('active', btn.dataset.theme === saved);
+    });
+  });
+})();
+// ═══════════════════════════════════════════════
+//  STATE
+// ═══════════════════════════════════════════════
+let questions    = [];
+let currentMode  = 'none';
+let answerVisible = false;
+
+// Unified question index (shared across flashcard, input, cloze, quiz)
+let currentQuestionIndex = 0;
+
+// Cloze
+let clozeAutoMode = false;
+// Quiz
+let quizOptions = [];
+let quizAnswered = false;
+// Exam
+let examQuestions = [];
+let examPos       = 0;
+let examResults   = [];
+let examTimer     = null;
+let examTimeLeft  = 0;
+let examDuration  = 0;
+let examAnswerShown = false;
+// Errors
+let errorsPool = [];
+let errorsIdx  = 0;
+
+const LS_Q    = 'examflow_questions';
+const LS_MODE = 'examflow_mode';
+const LS_EXAM = 'examflow_examduration';
+
+const MODES = [
+  { id:'flashcard', icon:'🃏', name:'Карточки',    desc:'Вспоминай ответ сам, затем проверяй' },
+  { id:'input',     icon:'✏️', name:'Ввод ответа',  desc:'Напечатай ответ — система проверит' },
+  { id:'cloze',     icon:'🔲', name:'Пропуски',     desc:'Заполни пропущенные слова в тексте' },
+  { id:'quiz',      icon:'📝', name:'Тест',         desc:'Выбери правильный из 4 вариантов' },
+  { id:'exam',      icon:'⏱',  name:'Экзамен',      desc:'Таймер, без подсказок, итог в конце' },
+  { id:'errors',    icon:'❌', name:'Ошибки',       desc:'Только вопросы, где ошибок больше' },
+  { id:'list',      icon:'📋', name:'Все вопросы',  desc:'Просмотр и поиск по всему списку' },
+];
+
+// ═══════════════════════════════════════════════
+//  INIT
+// ═══════════════════════════════════════════════
+(function init() {
+  const saved = localStorage.getItem(LS_Q);
+  if (saved) {
+    try {
+      questions = JSON.parse(saved);
+      const savedMode = localStorage.getItem(LS_MODE) || 'none';
+      buildUI();
+      if (savedMode && savedMode !== 'none') {
+        setMode(savedMode, true);
+      }
+    } catch(e) { console.warn('Failed to restore:', e); }
+  }
+
+  buildModeTiles();
+  buildMobileSelect();
+
+  document.getElementById('file-input').addEventListener('change', e => {
+    const file = e.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = ev => {
+      document.getElementById('import-textarea').value = ev.target.result;
+      document.getElementById('file-name').textContent = '✓ Файл загружен: ' + file.name;
+    };
+    reader.readAsText(file, 'UTF-8');
+  });
+
+  // drag-and-drop on import card
+  const importCard = document.querySelector('.import-card');
+  importCard.addEventListener('dragover', e => { e.preventDefault(); importCard.classList.add('drag-over'); });
+  importCard.addEventListener('dragleave', e => { if (!importCard.contains(e.relatedTarget)) importCard.classList.remove('drag-over'); });
+  importCard.addEventListener('drop', e => {
+    e.preventDefault();
+    importCard.classList.remove('drag-over');
+    const file = e.dataTransfer.files[0];
+    if (!file || !file.name.endsWith('.txt')) { alert('Поддерживаются только .txt файлы.'); return; }
+    const reader = new FileReader();
+    reader.onload = ev => {
+      document.getElementById('import-textarea').value = ev.target.result;
+      document.getElementById('file-name').textContent = '✓ Файл загружен: ' + file.name;
+    };
+    reader.readAsText(file, 'UTF-8');
+  });
+})();
+
+// ═══════════════════════════════════════════════
+//  BUILD UI ELEMENTS
+// ═══════════════════════════════════════════════
+function buildModeTiles() {
+  const container = document.getElementById('mode-tiles');
+  container.innerHTML = MODES.map(m => `
+    <div class="mode-tile${!questions.length ? ' disabled-tile' : ''}" id="tile-${m.id}" onclick="setMode('${m.id}')">
+      <div class="tile-icon">${m.icon}</div>
+      <div class="tile-name">${m.name}</div>
+      <div class="tile-desc">${m.desc}</div>
+    </div>
+  `).join('');
+}
+
+function buildMobileSelect() {
+  const sel = document.getElementById('mobile-mode-select');
+  sel.innerHTML = MODES.map(m => `<option value="${m.id}">${m.icon} ${m.name}</option>`).join('');
+}
+
+function updateActiveTile() {
+  MODES.forEach(x => {
+    const el = document.getElementById('tile-' + x.id);
+    if (el) el.classList.toggle('active-tile', x.id === currentMode);
+  });
+  // sync mobile select
+  const sel = document.getElementById('mobile-mode-select');
+  if (sel && currentMode !== 'none') sel.value = currentMode;
+}
+
+// ═══════════════════════════════════════════════
+//  PARSER (unchanged)
+// ═══════════════════════════════════════════════
+function parseQuestions(text, delimiter) {
+  if (delimiter) {
+    const blocks = text.split(delimiter).map(b => b.trim()).filter(Boolean);
+    const result = [];
+    for (const block of blocks) {
+      const lines = block.split('\n').map(l => l.trim()).filter(Boolean);
+      if (lines.length < 2) continue;
+      const question = lines[0];
+      let answer = lines.slice(1).join('\n').replace(/^[-•\t]/gm, '').trim();
+      if (question && answer) result.push({ question, answer, stats: { seen:0, correct:0, wrong:0 } });
+    }
+    return result;
+  }
+
+  const blocks = text.split(/Вопрос\s*\d+\./i);
+  const result = [];
+  for (let i = 1; i < blocks.length; i++) {
+    let block = blocks[i].trim();
+    if (!block) continue;
+    const lines = block.split('\n').map(l => l.trim()).filter(Boolean);
+    const question = lines[0];
+    let answer = lines.slice(1).join('\n').replace(/^[-•\t]/gm, '').trim();
+    if (question && answer) result.push({ question, answer, stats: { seen:0, correct:0, wrong:0 } });
+  }
+  return result;
+}
+
+// ═══════════════════════════════════════════════
+//  PARSE & LOAD
+// ═══════════════════════════════════════════════
+function parseAndLoad() {
+  const text = document.getElementById('import-textarea').value;
+  if (!text.trim()) { alert('Вставьте текст или загрузите файл.'); return; }
+
+  const delimMode = document.querySelector('input[name="delim"]:checked').value;
+  const customDelim = delimMode === 'custom' ? document.getElementById('custom-delim').value.trim() : null;
+
+  if (delimMode === 'custom' && !customDelim) {
+    alert('Укажите кастомный разделитель.'); return;
+  }
+
+  const parsed = parseQuestions(text, customDelim);
+  if (!parsed.length) {
+    alert('Не удалось найти вопросы. Убедитесь в формате текста.'); return;
+  }
+
+  // merge stats from existing questions if same question text
+  const existing = {};
+  questions.forEach(q => { existing[q.question] = q.stats; });
+  questions = parsed.map(q => ({
+    ...q,
+    stats: existing[q.question] || q.stats
+  }));
+
+  saveData();
+  buildUI();
+}
+
+function buildUI() {
+  if (!questions.length) return;
+
+  document.getElementById('q-counter').textContent = questions.length + ' вопросов';
+
+  // enable tiles
+  document.querySelectorAll('.mode-tile').forEach(t => t.classList.remove('disabled-tile'));
+
+  // show info panel immediately after questions loaded
+  document.getElementById('info-panel').style.display = 'flex';
+  updateInfoPanel();
+
+  // show stats row
+  renderStatsRow();
+}
+
+function renderStatsRow() {
+  const corr  = questions.reduce((s, q) => s + q.stats.correct, 0);
+  const wrong = questions.reduce((s, q) => s + q.stats.wrong, 0);
+  const total = questions.length;
+  const allAns = corr + wrong;
+  const pct = allAns ? Math.round(corr / allAns * 100) : 0;
+
+  const row = document.getElementById('stats-row');
+  row.style.display = 'grid';
+  row.innerHTML = `
+    <div class="stat-mini"><div class="stat-mini-val stat-total">${total}</div><div class="stat-mini-lbl">ВСЕГО</div></div>
+    <div class="stat-mini"><div class="stat-mini-val stat-ok">${corr}</div><div class="stat-mini-lbl">ВЕРНО</div></div>
+    <div class="stat-mini"><div class="stat-mini-val stat-bad">${wrong}</div><div class="stat-mini-lbl">ОШИБОК</div></div>
+    <div class="stat-mini"><div class="stat-mini-val stat-pct">${pct}%</div><div class="stat-mini-lbl">УСПЕХ</div></div>
+  `;
+}
+
+// ═══════════════════════════════════════════════
+//  SAVE / RESET / EXPORT
+// ═══════════════════════════════════════════════
+function saveData() {
+  localStorage.setItem(LS_Q, JSON.stringify(questions));
+  localStorage.setItem(LS_MODE, currentMode);
+}
+
+function resetAll() {
+  if (!confirm('Сбросить все вопросы и статистику?')) return;
+  if (examTimer) clearInterval(examTimer);
+  localStorage.removeItem(LS_Q);
+  localStorage.removeItem(LS_MODE);
+  location.reload();
+}
+
+function exportToTxt() {
+  if (!questions.length) { alert('Нет вопросов для экспорта.'); return; }
+  const text = questions.map((q, i) => `Вопрос ${i + 1}. ${q.question}\n${q.answer}`).join('\n\n');
+  const blob = new Blob([text], { type: 'text/plain;charset=utf-8' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a'); a.href = url; a.download = 'exam_questions.txt'; a.click();
+  URL.revokeObjectURL(url);
+}
+
+// ═══════════════════════════════════════════════
+//  SETTINGS TOGGLE
+// ═══════════════════════════════════════════════
+function toggleSettings() {
+  const body = document.getElementById('settings-body');
+  const btn  = document.getElementById('settings-toggle');
+  body.classList.toggle('open');
+  btn.classList.toggle('open');
+}
+
+function onDelimChange(radio) {
+  document.getElementById('custom-delim-wrap').classList.toggle('show', radio.value === 'custom');
+}
+
+// ═══════════════════════════════════════════════
+//  MODE SWITCHING
+// ═══════════════════════════════════════════════
+function goHome() {
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+function launchMobileMode() {
+  const sel = document.getElementById('mobile-mode-select');
+  if (sel) setMode(sel.value);
+}
+
+function setMode(mode, restoreSession) {
+  if (!questions.length) return;
+
+  if (!restoreSession) {
+    if (examTimer && currentMode === 'exam') { clearInterval(examTimer); examTimer = null; }
+    answerVisible = false;
+    // Only pick a new question index when NOT restoring session
+    currentQuestionIndex = pickWeighted();
+  }
+
+  currentMode = mode;
+  saveData();
+
+  // Info panel is always visible once questions are loaded
+  document.getElementById('info-panel').style.display = 'flex';
+
+  updateActiveTile();
+  updateInfoPanel();
+
+  if (mode === 'flashcard') {
+    renderFlashcard();
+  } else if (mode === 'input') {
+    renderInput();
+  } else if (mode === 'cloze') {
+    renderCloze();
+  } else if (mode === 'quiz') {
+    if (!restoreSession) currentQuestionIndex = pickRandom();
+    renderQuiz();
+  } else if (mode === 'exam') {
+    renderExamSetup();
+  } else if (mode === 'errors') {
+    renderErrors();
+  } else if (mode === 'list') {
+    renderList();
+  }
+}
+
+// ═══════════════════════════════════════════════
+//  INFO PANEL
+// ═══════════════════════════════════════════════
+function updateInfoPanel(qNum, total) {
+  const m = MODES.find(x => x.id === currentMode);
+  document.getElementById('info-mode-name').textContent = m ? `${m.icon} ${m.name}` : '—';
+
+  const seen = questions.filter(q => q.stats.seen > 0).length;
+  const tot  = questions.length;
+  const n    = qNum !== undefined ? qNum : seen;
+  const t    = total !== undefined ? total : tot;
+  const pct  = t ? Math.round(n / t * 100) : 0;
+
+  document.getElementById('info-q-text').innerHTML = `Вопрос <strong>${n} / ${t}</strong>`;
+  document.getElementById('info-bar-fill').style.width = pct + '%';
+  document.getElementById('info-pct').textContent = pct + '%';
+}
+
+// ═══════════════════════════════════════════════
+//  UTILITY
+// ═══════════════════════════════════════════════
+function esc(s) {
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+function pickWeighted() {
+  if (!questions.length) return 0;
+  const priorities = questions.map((q, i) => ({ i, p: (q.stats.wrong + 1) / (q.stats.seen + 1) }));
+  const total = priorities.reduce((s, x) => s + x.p, 0);
+  let r = Math.random() * total;
+  for (const { i, p } of priorities) { r -= p; if (r <= 0) return i; }
+  return 0;
+}
+
+function pickRandom(exclude = -1) {
+  if (questions.length <= 1) return 0;
+  let idx;
+  do { idx = Math.floor(Math.random() * questions.length); } while (idx === exclude && questions.length > 1);
+  return idx;
+}
+
+function normalize(s) { return s.toLowerCase().trim().replace(/[.,!?;:]+$/,''); }
+
+function progressBar(pos, total) {
+  const pct = total ? Math.round(pos / total * 100) : 0;
+  return `<div class="progress-wrap">
+    <div class="progress-bar"><div class="progress-fill" style="width:${pct}%"></div></div>
+    <div class="progress-meta"><span>${pos} из ${total}</span><span>${pct}%</span></div>
+  </div>`;
+}
+
+// ═══════════════════════════════════════════════
+//  🃏 FLASHCARD
+// ═══════════════════════════════════════════════
+function renderFlashcard() {
+  if (!questions.length) return;
+  const q = questions[currentQuestionIndex];
+  answerVisible = false;
+  const seen = questions.filter(x => x.stats.seen > 0).length;
+  updateInfoPanel(seen, questions.length);
+
+  document.getElementById('mode-area').innerHTML = `
+    <div class="mode-badge-row" style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1.5rem">
+      <span style="font-family:var(--mono);font-size:0.72rem;color:var(--muted)">🃏 КАРТОЧКИ</span>
+    </div>
+    ${progressBar(seen, questions.length)}
+    <div class="card">
+      <div class="card-label">
+        <span>ВОПРОС ${currentQuestionIndex + 1}</span>
+        <span>${q.stats.seen ? `✓${q.stats.correct} ✗${q.stats.wrong}` : 'Впервые'}</span>
+      </div>
+      <div class="question-text">${esc(q.question)}</div>
+      <div class="answer-box" id="fc-answer-box">
+        <div class="answer-label">// ПРАВИЛЬНЫЙ ОТВЕТ</div>
+        <div class="answer-text">${esc(q.answer)}</div>
+      </div>
+      <div class="btn-row" style="margin-bottom:0.75rem">
+        <button class="btn btn-ghost" onclick="fcToggleAnswer()" id="fc-show-btn">👁 Показать ответ</button>
+      </div>
+      <div class="btn-row" id="fc-mark-row" style="display:none">
+        <button class="btn btn-success" onclick="fcMark(true)">✓ Знал</button>
+        <button class="btn btn-danger"  onclick="fcMark(false)">✗ Не знал</button>
+      </div>
+    </div>`;
+}
+
+function fcToggleAnswer() {
+  answerVisible = !answerVisible;
+  const box = document.getElementById('fc-answer-box');
+  const btn = document.getElementById('fc-show-btn');
+  const row = document.getElementById('fc-mark-row');
+  if (answerVisible) {
+    box.classList.add('visible');
+    btn.textContent = '🙈 Скрыть ответ';
+    row.style.display = 'flex';
+    questions[currentQuestionIndex].stats.seen++;
+    saveData();
+  } else {
+    box.classList.remove('visible');
+    btn.textContent = '👁 Показать ответ';
+    row.style.display = 'none';
+  }
+}
+
+function fcMark(knew) {
+  if (knew) questions[currentQuestionIndex].stats.correct++;
+  else       questions[currentQuestionIndex].stats.wrong++;
+  saveData();
+  currentQuestionIndex = pickWeighted();
+  renderFlashcard();
+}
+
+// ═══════════════════════════════════════════════
+//  ✏️ INPUT
+// ═══════════════════════════════════════════════
+function renderInput() {
+  if (!questions.length) return;
+  const q = questions[currentQuestionIndex];
+  updateInfoPanel(currentQuestionIndex + 1, questions.length);
+
+  document.getElementById('mode-area').innerHTML = `
+    <div style="font-family:var(--mono);font-size:0.72rem;color:var(--muted);margin-bottom:1.5rem">✏️ ВВОД ОТВЕТА</div>
+    <div class="card">
+      <div class="card-label">
+        <span>ВОПРОС ${currentQuestionIndex + 1}</span>
+        <span>${q.stats.seen ? `✓${q.stats.correct} ✗${q.stats.wrong}` : 'Впервые'}</span>
+      </div>
+      <div class="question-text">${esc(q.question)}</div>
+      <div class="input-wrap">
+        <input class="answer-input" id="inp-input" type="text" placeholder="Введите ответ..."
+               onkeydown="if(event.key==='Enter')checkInputMode()">
+        <div class="check-result" id="inp-result"></div>
+      </div>
+      <div class="answer-box" id="inp-answer-box">
+        <div class="answer-label">// ПРАВИЛЬНЫЙ ОТВЕТ</div>
+        <div class="answer-text">${esc(q.answer)}</div>
+      </div>
+      <div class="btn-row">
+        <button class="btn btn-ghost" onclick="inpNext()">⟳ Пропустить</button>
+        <button class="btn btn-info"  onclick="checkInputMode()">Проверить</button>
+        <button class="btn btn-primary" id="inp-next-btn" style="display:none" onclick="inpNext()">Далее →</button>
+      </div>
+    </div>`;
+
+  document.getElementById('inp-input')?.focus();
+}
+
+function checkInputMode() {
+  const inp = document.getElementById('inp-input');
+  if (!inp || !inp.value.trim()) { inp?.focus(); return; }
+  const q = questions[currentQuestionIndex];
+  const user = normalize(inp.value);
+  const correct = normalize(q.answer);
+  const isCorrect = user === correct
+    || correct.includes(user)
+    || user.includes(correct.substring(0, Math.floor(correct.length * 0.6)));
+
+  q.stats.seen++;
+  const res = document.getElementById('inp-result');
+  if (isCorrect) {
+    q.stats.correct++;
+    inp.classList.add('correct');
+    res.className = 'check-result correct'; res.textContent = '✓ Верно!';
+  } else {
+    q.stats.wrong++;
+    inp.classList.add('wrong');
+    res.className = 'check-result wrong'; res.textContent = '✗ Неверно. Правильный ответ ниже.';
+  }
+  document.getElementById('inp-answer-box').classList.add('visible');
+  const nextBtn = document.getElementById('inp-next-btn');
+  if (nextBtn) nextBtn.style.display = '';
+  inp.disabled = true;
+  saveData();
+}
+
+function inpNext() {
+  currentQuestionIndex = pickWeighted();
+  renderInput();
+}
+
+// ═══════════════════════════════════════════════
+//  🔲 CLOZE
+// ═══════════════════════════════════════════════
+function renderCloze() {
+  if (!questions.length) return;
+  const q = questions[currentQuestionIndex];
+  const hasMarkup = /\*\*[^*]+\*\*/.test(q.answer);
+  updateInfoPanel(currentQuestionIndex + 1, questions.length);
+
+  const toggleHtml = `
+    <div class="cloze-mode-toggle">
+      <button class="cloze-toggle-btn ${!clozeAutoMode ? 'active' : ''}" onclick="setClozeMode(false)">✋ Ручной</button>
+      <button class="cloze-toggle-btn ${clozeAutoMode  ? 'active' : ''}" onclick="setClozeMode(true)">🤖 Авто</button>
+    </div>`;
+
+  let warningHtml = '';
+  if (!clozeAutoMode && !hasMarkup) {
+    warningHtml = `<div class="cloze-warning">⚠️ В этом билете нет размеченных слов. Нажмите «✏ Разметить» или включите Авто-режим.</div>`;
+  }
+
+  const clozeText = buildClozeHtml(q.answer, hasMarkup || clozeAutoMode);
+
+  document.getElementById('mode-area').innerHTML = `
+    <div style="display:flex;align-items:center;justify-content:space-between;font-family:var(--mono);font-size:0.72rem;color:var(--muted);margin-bottom:1.5rem">
+      <span>🔲 ПРОПУСКИ</span>
+      <button class="btn btn-warn" style="min-width:auto;padding:0.4rem 0.75rem;font-size:0.78rem" onclick="openClozeEditor()">✏ Разметить пропуски</button>
+    </div>
+    <div class="card">
+      <div class="card-label">
+        <span>ВОПРОС ${currentQuestionIndex + 1}</span>
+        <span>${q.stats.seen ? `✓${q.stats.correct} ✗${q.stats.wrong}` : 'Впервые'}</span>
+      </div>
+      ${toggleHtml}
+      ${warningHtml}
+      <div class="question-text" style="margin-bottom:0.75rem">${esc(q.question)}</div>
+      <div class="cloze-text" id="cloze-text">${clozeText}</div>
+      <div class="btn-row">
+        <button class="btn btn-ghost" onclick="clozeReveal()">👁 Показать ответы</button>
+        <button class="btn btn-info"  onclick="clozeCheck()">✓ Проверить</button>
+        <button class="btn btn-primary" onclick="clozeNext()">Далее →</button>
+      </div>
+      <div class="check-result" id="cloze-result" style="margin-top:0.75rem"></div>
+    </div>`;
+}
+
+function buildClozeHtml(text, active) {
+  if (!active) return esc(text).replace(/\n/g, '<br>');
+  let result = '';
+  if (clozeAutoMode) {
+    // Tokenize keeping punctuation attached but matching clean word
+    let wordCount = 0;
+    // Split into tokens: words (with optional trailing punctuation) and whitespace/newlines
+    const tokens = text.split(/(\s+|\n)/);
+    tokens.forEach(token => {
+      if (!token) return;
+      if (/^\s+$/.test(token)) {
+        result += token.replace(/\n/g, '<br>');
+        return;
+      }
+      // Strip trailing punctuation to get the core word
+      const core = token.replace(/[.,!?;:()«»"'\-]+$/g, '').replace(/^[.,!?;:()«»"'\-]+/g, '');
+      const suffix = token.slice(core.length > 0 ? token.lastIndexOf(core) + core.length : token.length);
+      const prefix = core.length > 0 ? token.slice(0, token.indexOf(core)) : '';
+
+      if (core.length > 3) {
+        wordCount++;
+        if (wordCount % 3 === 0) {
+          result += esc(prefix) + `<input class="cloze-blank" data-answer="${escAttr(core)}" size="${Math.max(8, core.length)}" placeholder="...">` + esc(suffix);
+          return;
+        }
+      }
+      result += esc(token);
+    });
+  } else {
+    const parts = text.split(/\*\*[^*]+\*\*/);
+    const blanks = [...text.matchAll(/\*\*([^*]+)\*\*/g)].map(m =>
+      `<input class="cloze-blank" data-answer="${escAttr(m[1])}" size="${Math.max(8, m[1].length)}" placeholder="...">`
+    );
+    parts.forEach((part, i) => {
+      result += esc(part).replace(/\n/g, '<br>');
+      if (blanks[i]) result += blanks[i];
+    });
+  }
+  return result || esc(text).replace(/\n/g, '<br>');
+}
+
+function escAttr(s) {
+  return String(s).replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+function setClozeMode(auto) {
+  if (auto && !clozeAutoMode) {
+    if (!confirm('⚠️ Автоматический режим может скрывать не те слова.\nДля точного результата используйте разметку **слово**.\n\nВключить автоматический режим?')) return;
+  }
+  clozeAutoMode = auto;
+  renderCloze();
+}
+
+function clozeCheck() {
+  const blanks = document.querySelectorAll('.cloze-blank');
+  if (!blanks.length) return;
+  let correct = 0;
+  blanks.forEach(b => {
+    const ans = normalize(b.dataset.answer);
+    const val = normalize(b.value);
+    b.classList.remove('correct-blank','wrong-blank');
+    if (val === ans || (ans.includes(val) && val.length > 2)) {
+      b.classList.add('correct-blank'); correct++;
+    } else {
+      b.classList.add('wrong-blank');
+    }
+  });
+  const res = document.getElementById('cloze-result');
+  const total = blanks.length;
+  if (correct === total) {
+    res.className = 'check-result correct'; res.textContent = `✓ Все верно! (${correct}/${total})`;
+    questions[currentQuestionIndex].stats.correct++; questions[currentQuestionIndex].stats.seen++;
+  } else {
+    res.className = 'check-result wrong'; res.textContent = `✗ Верно: ${correct}/${total}`;
+    questions[currentQuestionIndex].stats.wrong++; questions[currentQuestionIndex].stats.seen++;
+  }
+  saveData();
+}
+
+function clozeReveal() {
+  document.querySelectorAll('.cloze-blank').forEach(b => {
+    b.value = b.dataset.answer;
+    b.classList.add('revealed-blank');
+    b.disabled = true;
+  });
+}
+
+function clozeNext() {
+  currentQuestionIndex = pickWeighted();
+  renderCloze();
+}
+
+// ── Cloze Markup Editor ──
+function openClozeEditor() {
+  const q = questions[currentQuestionIndex];
+  document.getElementById('cloze-editor-ta').value = q.answer;
+  document.getElementById('cloze-editor-overlay').classList.add('open');
+}
+
+function closeClozeEditor() {
+  document.getElementById('cloze-editor-overlay').classList.remove('open');
+}
+
+function saveClozeMarkup() {
+  const newAnswer = document.getElementById('cloze-editor-ta').value.trim();
+  if (!newAnswer) { alert('Текст не может быть пустым.'); return; }
+  questions[currentQuestionIndex].answer = newAnswer;
+  saveData();
+  closeClozeEditor();
+  renderCloze();
+}
+
+// ═══════════════════════════════════════════════
+//  📝 QUIZ
+// ═══════════════════════════════════════════════
+function renderQuiz() {
+  if (questions.length < 2) {
+    document.getElementById('mode-area').innerHTML = `
+      <div class="empty"><div class="big">📝</div>Нужно минимум 2 вопроса для теста.</div>`;
+    return;
+  }
+
+  const q = questions[currentQuestionIndex];
+  quizAnswered = false;
+  updateInfoPanel(currentQuestionIndex + 1, questions.length);
+
+  const others = questions.filter((_, i) => i !== currentQuestionIndex);
+  const shuffled = others.sort(() => Math.random() - 0.5).slice(0, 3);
+  const correct = { idx: currentQuestionIndex, text: q.answer, isCorrect: true };
+  quizOptions = [correct, ...shuffled.map(x => ({ text: x.answer, isCorrect: false }))];
+  quizOptions = quizOptions.sort(() => Math.random() - 0.5);
+
+  const opts = quizOptions.map((opt, i) => {
+    const short = opt.text.length > 100 ? opt.text.slice(0, 100) + '...' : opt.text;
+    return `<button class="test-option" onclick="quizSelect(${i})" id="quiz-opt-${i}">${esc(short)}</button>`;
+  }).join('');
+
+  document.getElementById('mode-area').innerHTML = `
+    <div style="font-family:var(--mono);font-size:0.72rem;color:var(--muted);margin-bottom:1.5rem">📝 ТЕСТ</div>
+    <div class="card">
+      <div class="card-label"><span>ВОПРОС ${currentQuestionIndex + 1}</span></div>
+      <div class="question-text">${esc(q.question)}</div>
+      <div class="test-options">${opts}</div>
+      <div class="check-result" id="quiz-result"></div>
+      <div class="btn-row" style="margin-top:1rem">
+        <button class="btn btn-primary" id="quiz-next-btn" style="display:none" onclick="quizNext()">Следующий →</button>
+      </div>
+    </div>`;
+}
+
+function quizSelect(i) {
+  if (quizAnswered) return;
+  quizAnswered = true;
+  const opt = quizOptions[i];
+  const res = document.getElementById('quiz-result');
+
+  quizOptions.forEach((o, j) => {
+    const btn = document.getElementById('quiz-opt-' + j);
+    if (o.isCorrect) btn.classList.add('reveal-correct');
+    btn.disabled = true;
+  });
+
+  const btn = document.getElementById('quiz-opt-' + i);
+  const q = questions[currentQuestionIndex];
+  q.stats.seen++;
+  if (opt.isCorrect) {
+    btn.classList.add('selected-correct');
+    res.className = 'check-result correct'; res.textContent = '✓ Верно!';
+    q.stats.correct++;
+  } else {
+    btn.classList.add('selected-wrong');
+    res.className = 'check-result wrong'; res.textContent = '✗ Неверно.';
+    q.stats.wrong++;
+  }
+  saveData();
+  const nextBtn = document.getElementById('quiz-next-btn');
+  if (nextBtn) nextBtn.style.display = '';
+}
+
+function quizNext() {
+  currentQuestionIndex = pickRandom(currentQuestionIndex);
+  renderQuiz();
+}
+
+// ═══════════════════════════════════════════════
+//  ⏱ EXAM
+// ═══════════════════════════════════════════════
+function renderExamSetup() {
+  const savedDuration = parseInt(localStorage.getItem(LS_EXAM)) || 30;
+  updateInfoPanel(0, questions.length);
+
+  document.getElementById('mode-area').innerHTML = `
+    <div style="font-family:var(--mono);font-size:0.72rem;color:var(--muted);margin-bottom:1.5rem">⏱ ЭКЗАМЕН</div>
+    <div class="card">
+      <div class="card-label"><span>НАСТРОЙКИ ЭКЗАМЕНА</span></div>
+      <div class="question-text" style="font-size:1.1rem;margin-bottom:1.25rem">Проверьте свои знания в режиме экзамена</div>
+      <div style="margin-bottom:1rem">
+        <div style="font-family:var(--mono);font-size:0.75rem;color:var(--muted);margin-bottom:0.4rem">ВРЕМЯ НА ВОПРОС (МИНУТ)</div>
+        <select id="exam-time-select" class="mobile-select" style="max-width:200px">
+          <option value="1"  ${savedDuration===1?'selected':''}>1 мин.</option>
+          <option value="2"  ${savedDuration===2?'selected':''}>2 мин.</option>
+          <option value="3"  ${savedDuration===3?'selected':''}>3 мин.</option>
+          <option value="5"  ${savedDuration===5?'selected':''}>5 мин.</option>
+          <option value="10" ${savedDuration===10?'selected':''}>10 мин.</option>
+          <option value="30" ${savedDuration===30?'selected':''}>30 мин. (весь экзамен)</option>
+        </select>
+      </div>
+      <div style="margin-bottom:1.25rem">
+        <div style="font-family:var(--mono);font-size:0.75rem;color:var(--muted);margin-bottom:0.4rem">КОЛИЧЕСТВО ВОПРОСОВ</div>
+        <select id="exam-count-select" class="mobile-select" style="max-width:200px">
+          <option value="5">5 вопросов</option>
+          <option value="10" selected>10 вопросов</option>
+          <option value="20">20 вопросов</option>
+          <option value="all">Все (${questions.length})</option>
+        </select>
+      </div>
+      <div class="btn-row">
+        <button class="btn btn-primary" onclick="startExam()">▶ Начать экзамен</button>
+      </div>
+    </div>`;
+}
+
+function startExam() {
+  const timeMin  = parseInt(document.getElementById('exam-time-select').value);
+  const countVal = document.getElementById('exam-count-select').value;
+  const count    = countVal === 'all' ? questions.length : Math.min(parseInt(countVal), questions.length);
+  localStorage.setItem(LS_EXAM, timeMin);
+  examDuration = timeMin * 60;
+  examTimeLeft = examDuration;
+  examResults  = [];
+  examPos      = 0;
+  examAnswerShown = false;
+  const pool = [...Array(questions.length).keys()].sort(() => Math.random() - 0.5);
+  examQuestions = pool.slice(0, count);
+  renderExamQuestion();
+}
+
+function renderExamQuestion() {
+  if (examPos >= examQuestions.length) { renderExamResults(); return; }
+  if (examTimer) clearInterval(examTimer);
+  examTimeLeft = examDuration;
+  examAnswerShown = false;
+
+  const qIdx = examQuestions[examPos];
+  const q    = questions[qIdx];
+  updateInfoPanel(examPos + 1, examQuestions.length);
+
+  const updateTimer = () => {
+    const el = document.getElementById('exam-timer');
+    if (!el) { clearInterval(examTimer); return; }
+    const m = String(Math.floor(examTimeLeft / 60)).padStart(2,'0');
+    const s = String(examTimeLeft % 60).padStart(2,'0');
+    el.textContent = `${m}:${s}`;
+    el.className = 'exam-timer' + (examTimeLeft <= 10 ? ' warning' : '');
+    if (examTimeLeft <= 0) { clearInterval(examTimer); examAutoFail(qIdx); }
+    examTimeLeft--;
+  };
+
+  document.getElementById('mode-area').innerHTML = `
+    <div style="font-family:var(--mono);font-size:0.72rem;color:var(--muted);margin-bottom:1.5rem">⏱ ЭКЗАМЕН</div>
+    ${progressBar(examPos + 1, examQuestions.length)}
+    <div class="card">
+      <div class="card-label">
+        <span>ВОПРОС ${examPos + 1} из ${examQuestions.length}</span>
+        <div class="exam-timer" id="exam-timer">--:--</div>
+      </div>
+      <div class="question-text">${esc(q.question)}</div>
+      <div class="answer-box" id="exam-answer-box">
+        <div class="answer-label">// ЭТАЛОННЫЙ ОТВЕТ</div>
+        <div class="answer-text">${esc(q.answer)}</div>
+      </div>
+      <div id="exam-actions">
+        <div class="btn-row" style="margin-bottom:0.75rem">
+          <button class="btn btn-ghost" onclick="examShowAnswer(${qIdx})">👁 Показать эталон</button>
+        </div>
+        <div class="btn-row" id="exam-mark-row" style="display:none">
+          <button class="btn btn-success" onclick="examMark(${qIdx}, true)">✓ Знал</button>
+          <button class="btn btn-danger"  onclick="examMark(${qIdx}, false)">✗ Не знал</button>
+        </div>
+      </div>
+    </div>`;
+
+  examTimer = setInterval(updateTimer, 1000);
+  updateTimer();
+}
+
+function examShowAnswer(qIdx) {
+  if (examAnswerShown) return;
+  examAnswerShown = true;
+  document.getElementById('exam-answer-box').classList.add('visible');
+  const markRow = document.getElementById('exam-mark-row');
+  if (markRow) markRow.style.display = 'flex';
+}
+
+function examMark(qIdx, knew) {
+  if (examTimer) clearInterval(examTimer);
+  questions[qIdx].stats.seen++;
+  if (knew) questions[qIdx].stats.correct++; else questions[qIdx].stats.wrong++;
+  examResults.push({ qIdx, knew });
+  examPos++;
+  saveData();
+  renderExamQuestion();
+}
+
+function examAutoFail(qIdx) {
+  questions[qIdx].stats.seen++;
+  questions[qIdx].stats.wrong++;
+  examResults.push({ qIdx, knew: false });
+  examPos++;
+  saveData();
+  renderExamQuestion();
+}
+
+function renderExamResults() {
+  const correct = examResults.filter(r => r.knew).length;
+  const total   = examResults.length;
+  const pct     = total ? Math.round(correct / total * 100) : 0;
+
+  const rows = examResults.map(r => {
+    const q = questions[r.qIdx];
+    return `<div class="exam-result-row">
+      <span class="exam-result-q">${esc(q.question)}</span>
+      <span class="exam-result-badge ${r.knew ? 'badge-ok' : 'badge-bad'}">${r.knew ? '✓' : '✗'}</span>
+    </div>`;
+  }).join('');
+
+  document.getElementById('mode-area').innerHTML = `
+    <div style="font-family:var(--mono);font-size:0.72rem;color:var(--muted);margin-bottom:1.5rem">⏱ РЕЗУЛЬТАТЫ ЭКЗАМЕНА</div>
+    <div class="stats-grid" style="margin-bottom:1.5rem">
+      <div class="stat-card"><div class="stat-value stat-total">${total}</div><div class="stat-label">ВСЕГО</div></div>
+      <div class="stat-card"><div class="stat-value stat-ok">${correct}</div><div class="stat-label">ВЕРНО</div></div>
+      <div class="stat-card"><div class="stat-value stat-bad">${total-correct}</div><div class="stat-label">ОШИБОК</div></div>
+      <div class="stat-card"><div class="stat-value stat-pct">${pct}%</div><div class="stat-label">УСПЕХ</div></div>
+    </div>
+    <div class="card exam-results">
+      <div class="card-label"><span>ДЕТАЛИ</span></div>
+      ${rows}
+    </div>
+    <div class="btn-row" style="margin-top:1rem">
+      <button class="btn btn-primary" onclick="renderExamSetup()">↺ Ещё раз</button>
+    </div>`;
+}
+
+// ═══════════════════════════════════════════════
+//  ❌ ERRORS
+// ═══════════════════════════════════════════════
+function renderErrors() {
+  errorsPool = questions.map((q, i) => ({ q, i })).filter(({ q }) => q.stats.wrong > q.stats.correct);
+
+  if (!errorsPool.length) {
+    document.getElementById('mode-area').innerHTML = `
+      <div class="errors-empty">
+        <div style="font-size:3rem;margin-bottom:1rem">✅</div>
+        Ошибок нет
+      </div>`;
+    return;
+  }
+
+  errorsIdx = 0;
+  renderErrorsCard();
+}
+
+function renderErrorsCard() {
+  if (errorsIdx >= errorsPool.length) {
+    document.getElementById('mode-area').innerHTML = `
+      <div class="errors-empty">
+        <div style="font-size:3rem;margin-bottom:1rem">✅</div>
+        Проработаны все ошибочные вопросы!
+      </div>
+      <div class="btn-row" style="margin-top:1rem">
+        <button class="btn btn-primary" onclick="renderErrors()">↺ Повторить ошибки</button>
+      </div>`;
+    return;
+  }
+
+  const { q, i } = errorsPool[errorsIdx];
+  updateInfoPanel(errorsIdx + 1, errorsPool.length);
+
+  document.getElementById('mode-area').innerHTML = `
+    <div style="font-family:var(--mono);font-size:0.72rem;color:var(--muted);margin-bottom:1.5rem">❌ ОШИБКИ (${errorsIdx + 1}/${errorsPool.length})</div>
+    ${progressBar(errorsIdx + 1, errorsPool.length)}
+    <div class="card">
+      <div class="card-label">
+        <span>ВОПРОС ${i + 1}</span>
+        <span style="color:var(--wrong)">✗${q.stats.wrong} ✓${q.stats.correct}</span>
+      </div>
+      <div class="question-text">${esc(q.question)}</div>
+      <div class="answer-box" id="err-answer-box">
+        <div class="answer-label">// ПРАВИЛЬНЫЙ ОТВЕТ</div>
+        <div class="answer-text">${esc(q.answer)}</div>
+      </div>
+      <div class="btn-row" style="margin-bottom:0.75rem">
+        <button class="btn btn-ghost" onclick="errToggleAnswer()">👁 Показать ответ</button>
+      </div>
+      <div class="btn-row" id="err-mark-row" style="display:none">
+        <button class="btn btn-success" onclick="errMark(${i}, true)">✓ Теперь знаю</button>
+        <button class="btn btn-danger"  onclick="errMark(${i}, false)">✗ Не знаю</button>
+      </div>
+    </div>`;
+}
+
+function errToggleAnswer() {
+  document.getElementById('err-answer-box').classList.add('visible');
+  const row = document.getElementById('err-mark-row');
+  if (row) row.style.display = 'flex';
+}
+
+function errMark(qIdx, knew) {
+  questions[qIdx].stats.seen++;
+  if (knew) questions[qIdx].stats.correct++; else questions[qIdx].stats.wrong++;
+  saveData();
+  errorsIdx++;
+  renderErrorsCard();
+}
+
+// ═══════════════════════════════════════════════
+//  📋 LIST
+// ═══════════════════════════════════════════════
+function renderList(filter) {
+  const area = document.getElementById('mode-area');
+  updateInfoPanel(questions.length, questions.length);
+
+  if (!document.getElementById('search-input')) {
+    area.innerHTML = `
+      <div style="font-family:var(--mono);font-size:0.72rem;color:var(--muted);margin-bottom:1rem">📋 ВСЕ ВОПРОСЫ</div>
+      <input class="search-input" id="search-input" type="text" placeholder="🔍 Поиск по вопросам...">
+      <div class="q-list" id="q-list"></div>`;
+    const inp = document.getElementById('search-input');
+    inp.addEventListener('input', () => renderListItems(inp.value));
+    if (filter) inp.value = filter;
+    inp.focus();
+  }
+  renderListItems(filter || '');
+}
+
+function renderListItems(filter) {
+  const f = (filter || document.getElementById('search-input')?.value || '').toLowerCase();
+  const items = questions
+    .map((q, i) => ({ q, i }))
+    .filter(({ q }) => !f || q.question.toLowerCase().includes(f) || q.answer.toLowerCase().includes(f));
+
+  const list = document.getElementById('q-list');
+  if (!list) return;
+  if (!items.length) {
+    list.innerHTML = `<div class="empty"><div class="big">🔍</div>Ничего не найдено</div>`;
+  } else {
+    list.innerHTML = items.map(({ q, i }) => {
+      const dotClass = q.stats.seen === 0 ? '' : q.stats.correct > q.stats.wrong ? 'ok' : 'bad';
+      return `<div class="q-list-item" onclick="openModal(${i})">
+        <span class="q-idx">${i + 1}</span>
+        <span class="q-text">${esc(q.question)}</span>
+        <span class="q-dot ${dotClass}"></span>
+      </div>`;
+    }).join('');
+  }
+}
+
+// ═══════════════════════════════════════════════
+//  MODAL
+// ═══════════════════════════════════════════════
+function openDocs() {
+  document.getElementById('docs-overlay').classList.add('open');
+  document.body.style.overflow = 'hidden';
+}
+
+function closeDocs() {
+  document.getElementById('docs-overlay').classList.remove('open');
+  document.body.style.overflow = '';
+}
+
+function openModal(idx) {
+  const q = questions[idx];
+  document.getElementById('modal-q').textContent = q.question;
+  document.getElementById('modal-a').textContent = q.answer;
+  document.getElementById('modal-overlay').classList.add('open');
+}
+
+function closeModal(e) {
+  if (!e || e.target === document.getElementById('modal-overlay')) {
+    document.getElementById('modal-overlay').classList.remove('open');
+  }
+}
+</script>
+</body>
+</html>
