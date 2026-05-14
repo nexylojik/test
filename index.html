@@ -1617,6 +1617,30 @@
               <span style="color:var(--muted);font-size:0.72rem">Поддерживаются нумерации: 1) / 1. / Вопрос 1.</span>
             </div>
             <textarea id="mcq-textarea-landing" style="width:100%;min-height:160px;background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius);padding:1rem;color:var(--text);font-family:var(--mono);font-size:0.82rem;line-height:1.7;outline:none;resize:vertical;transition:border-color .15s" placeholder="Вставьте тест сюда..."></textarea>
+
+            <!-- delimiter settings -->
+            <div class="import-settings" style="margin-top:0.75rem;margin-bottom:0">
+              <button class="settings-toggle" id="mcq-settings-toggle" onclick="toggleMcqSettings()">
+                <span class="arr">▶</span> ⚙ Разделение вопросов
+              </button>
+              <div class="settings-body" id="mcq-settings-body">
+                <div class="radio-group">
+                  <label class="radio-label">
+                    <input type="radio" name="mcq-delim" value="auto" checked onchange="onMcqDelimChange(this)">
+                    Автоматически (1) / Вопрос 1.)
+                  </label>
+                  <label class="radio-label">
+                    <input type="radio" name="mcq-delim" value="custom" onchange="onMcqDelimChange(this)">
+                    Кастомный разделитель
+                  </label>
+                </div>
+                <div class="custom-delim-wrap" id="mcq-custom-delim-wrap">
+                  <span class="custom-delim-label">Разделитель между вопросами:</span>
+                  <input class="custom-delim-input" id="mcq-custom-delim" type="text" placeholder="Например: ---">
+                </div>
+              </div>
+            </div>
+
             <div style="margin-top:0.75rem" class="btn-row">
               <label class="btn-file-label" style="flex:0 0 auto">
                 📂 Файл (.txt)
@@ -1985,7 +2009,23 @@ function mcqFileLoadLanding(e) {
 function mcqParseAndStartLanding() {
   const text = document.getElementById('mcq-textarea-landing').value;
   if (!text.trim()) { document.getElementById('mcq-parse-hint-landing').textContent = '⚠ Вставьте текст теста'; return; }
-  const parsed = parseMcqText(text);
+
+  const delimMode = document.querySelector('input[name="mcq-delim"]:checked')?.value || 'auto';
+  const customDelim = delimMode === 'custom' ? document.getElementById('mcq-custom-delim').value.trim() : null;
+
+  if (delimMode === 'custom' && !customDelim) {
+    document.getElementById('mcq-parse-hint-landing').textContent = '⚠ Укажите кастомный разделитель';
+    return;
+  }
+
+  // If custom delimiter: split text into blocks first, then parse each block as MCQ
+  let parseText = text;
+  if (customDelim) {
+    // Join blocks back with double newline so parseMcqText can handle them normally
+    parseText = text.split(customDelim).map(b => b.trim()).filter(Boolean).join('\n\n');
+  }
+
+  const parsed = parseMcqText(parseText);
   if (!parsed.length) {
     document.getElementById('mcq-parse-hint-landing').textContent = '⚠ Вопросы не найдены — проверьте формат';
     return;
@@ -2183,6 +2223,18 @@ function exportToTxt() {
 // ═══════════════════════════════════════════════
 //  SETTINGS TOGGLE
 // ═══════════════════════════════════════════════
+function toggleMcqSettings() {
+  const body = document.getElementById('mcq-settings-body');
+  const btn  = document.getElementById('mcq-settings-toggle');
+  body.classList.toggle('open');
+  btn.classList.toggle('open');
+}
+
+function onMcqDelimChange(radio) {
+  document.getElementById('mcq-custom-delim-wrap').classList.toggle('show', radio.value === 'custom');
+}
+
+
 function toggleSettings() {
   const body = document.getElementById('settings-body');
   const btn  = document.getElementById('settings-toggle');
@@ -3046,29 +3098,7 @@ function renderMcqHub() {
         <button class="btn btn-ghost"   onclick="mcqStartSaved(true)">🔀 Случайный порядок</button>
         <button class="btn btn-ghost danger" onclick="mcqClearSaved()">✕ Очистить</button>
       </div>
-    </div>` : ''}
-
-    <div class="card">
-      <div class="card-label"><span>ЗАГРУЗИТЬ НОВЫЙ ТЕСТ</span></div>
-      <div class="format-hint" style="margin-bottom:1rem">
-        <strong>📌 Формат:</strong><br>
-        1) Текст вопроса<br>
-        1. Вариант А<br>
-        2. Вариант Б<br>
-        3. Вариант В<br>
-        Правильный ответ: 2<br><br>
-        <span style="color:var(--muted);font-size:0.72rem">Поддерживаются нумерации: 1) / 1. / Вопрос 1.</span>
-      </div>
-      <textarea id="mcq-textarea" style="width:100%;min-height:160px;background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius);padding:1rem;color:var(--text);font-family:var(--mono);font-size:0.82rem;line-height:1.7;outline:none;resize:vertical;transition:border-color .15s" placeholder="Вставьте тест сюда..."></textarea>
-      <div style="margin-top:0.75rem" class="btn-row">
-        <label class="btn-file-label" style="flex:0 0 auto">
-          📂 Файл (.txt)
-          <input type="file" id="mcq-file-input" accept=".txt" onchange="mcqFileLoad(event)">
-        </label>
-        <button class="btn btn-primary" onclick="mcqParseAndStart()">▶ Разобрать и начать</button>
-      </div>
-      <div id="mcq-parse-hint" style="font-family:var(--mono);font-size:0.75rem;color:var(--accent);margin-top:0.5rem;min-height:1rem"></div>
-    </div>`;
+    </div>` : '<div style="font-family:var(--mono);font-size:0.8rem;color:var(--muted);text-align:center;padding:1.5rem 0">Нет загруженного теста — вставьте данные выше и нажмите «Разобрать и начать».</div>'}`;
 
   // populate saved info
   if (hasSaved) {
@@ -3082,33 +3112,7 @@ function renderMcqHub() {
   }
 }
 
-function mcqFileLoad(e) {
-  const file = e.target.files[0];
-  if (!file) return;
-  const reader = new FileReader();
-  reader.onload = ev => {
-    document.getElementById('mcq-textarea').value = ev.target.result;
-    document.getElementById('mcq-parse-hint').textContent = '✓ Файл загружен: ' + file.name;
-  };
-  reader.readAsText(file, 'UTF-8');
-}
 
-function mcqParseAndStart() {
-  const text = document.getElementById('mcq-textarea').value;
-  if (!text.trim()) { document.getElementById('mcq-parse-hint').textContent = '⚠ Вставьте текст теста'; return; }
-  const parsed = parseMcqText(text);
-  if (!parsed.length) {
-    document.getElementById('mcq-parse-hint').textContent = '⚠ Вопросы не найдены — проверьте формат';
-    return;
-  }
-  // merge stats if re-importing
-  const existing = {};
-  const saved = localStorage.getItem(LS_MCQ);
-  if (saved) JSON.parse(saved).forEach(q => { existing[q.question] = q.stats; });
-  mcqQuestions = parsed.map(q => ({ ...q, stats: existing[q.question] || q.stats }));
-  localStorage.setItem(LS_MCQ, JSON.stringify(mcqQuestions));
-  mcqBegin(false);
-}
 
 function mcqStartSaved(shuffle) {
   const saved = localStorage.getItem(LS_MCQ);
