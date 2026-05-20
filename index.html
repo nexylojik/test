@@ -1619,12 +1619,10 @@
           <div class="import-card">
             <div class="import-label">📥 Вставьте текст или загрузите файл</div>
             <div class="format-hint">
-              <strong>📌 Поддерживаемый формат:</strong><br>
-              Вопрос 1. Морфологические особенности насекомых<br>
-              Тело насекомых разделено на голову, грудь и брюшко...<br><br>
-              Вопрос 2. Отряд вши: особенности и развитие<br>
-              Постоянные эктопаразиты, питаются кровью...<br>
-              <span style="color:var(--muted);font-size:0.75rem">Каждый блок «Вопрос N.» = отдельная карточка</span>
+              <strong>📌 Поддерживаемые форматы:</strong><br>
+              <code>Вопрос 1.</code> · <code>Билет 1)</code> · <code>№1:</code> · <code>Question 1 -</code><br>
+              <code>Q:</code> / <code>A:</code> · пустая строка между блоками · кастомный разделитель.<br><br>
+              <span style="color:var(--muted);font-size:0.75rem">Первая строка блока — заголовок, остальное — ответ. Маркеры списков (<code>- • * → —</code>) очищаются автоматически.</span>
             </div>
             <textarea id="import-textarea" placeholder="Вставьте билеты сюда...&#10;&#10;Вопрос 1. Название вопроса&#10;Текст ответа на первый вопрос...&#10;&#10;Вопрос 2. Название второго вопроса&#10;Текст ответа на второй вопрос..."></textarea>
             <div class="import-actions">
@@ -1646,7 +1644,7 @@
               <div class="radio-group">
                 <label class="radio-label">
                   <input type="radio" name="delim" value="auto" checked onchange="onDelimChange(this)">
-                  Авто (Вопрос N.)
+                  Авто (Вопрос/Билет/№N, Q:/A:, пустая строка)
                 </label>
                 <label class="radio-label">
                   <input type="radio" name="delim" value="custom" onchange="onDelimChange(this)">
@@ -1667,12 +1665,11 @@
             <div class="card-label"><span>ЗАГРУЗИТЬ MCQ-ТЕСТ</span></div>
             <div class="format-hint" style="margin-bottom:1rem">
               <strong>📌 Формат:</strong><br>
-              1) Текст вопроса<br>
-              1. Вариант А<br>
-              2. Вариант Б<br>
-              3. Вариант В<br>
-              Правильный ответ: 2<br><br>
-              <span style="color:var(--muted);font-size:0.72rem">Поддерживаются нумерации: 1) / 1. / Вопрос 1.</span>
+              Текст вопроса (или <code>Вопрос 1.</code>)<br>
+              <code>1)</code> <span style="color:var(--muted)">/</span> <code>1.</code> <span style="color:var(--muted)">/</span> <code>А)</code> Вариант А<br>
+              <code>2)</code> Вариант Б<br>
+              <code>Ответ: 2</code> <span style="color:var(--muted)">/</span> <code>Правильный ответ: 1, 3</code> <span style="color:var(--muted)">/</span> <code>Ответ — Б</code><br><br>
+              <span style="color:var(--muted);font-size:0.72rem">Числовые (1–9) и буквенные варианты (А–Й, a–j). Несколько правильных = multi-select. Блоки разделяются пустой строкой.</span>
             </div>
             <textarea id="mcq-textarea-landing" style="width:100%;min-height:160px;background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius);padding:1rem;color:var(--text);font-family:var(--mono);font-size:0.82rem;line-height:1.7;outline:none;resize:vertical;transition:border-color .15s" placeholder="Вставьте тест сюда..."></textarea>
 
@@ -1685,7 +1682,7 @@
                 <div class="radio-group">
                   <label class="radio-label">
                     <input type="radio" name="mcq-delim" value="auto" checked onchange="onMcqDelimChange(this)">
-                    Автоматически (1) / Вопрос 1.)
+                    Автоматически (1) / 1. / А) / Вопрос N)
                   </label>
                   <label class="radio-label">
                     <input type="radio" name="mcq-delim" value="custom" onchange="onMcqDelimChange(this)">
@@ -1773,32 +1770,30 @@
     <p>На главной экране выберите один из двух режимов — <strong>Карточки & Тренажёр</strong> или <strong>MCQ-Тест</strong>. Вставьте текст или загрузите <code>.txt</code> файл, нажмите кнопку запуска. Прогресс сохраняется автоматически.</p>
 
     <h2>Режим 1 — Карточки & Тренажёр</h2>
-    <p>Загрузите вопросы в формате <strong>Вопрос N.</strong> — каждый блок начинается с этого заголовка:</p>
+    <p>Загрузите вопросы. Парсер понимает несколько форматов:</p>
     <div class="docs-codeblock"><strong>Вопрос 1.</strong> Морфологические особенности насекомых
 Тело разделено на голову, грудь и брюшко...
 
-<strong>Вопрос 2.</strong> Отряд вши
+<strong>Билет 2)</strong> Отряд вши
 Постоянные эктопаразиты, питаются кровью...</div>
+    <p>Поддерживаются заголовки: <code>Вопрос N</code>, <code>Билет N</code>, <code>Тема N</code>, <code>Question N</code>, <code>Q N</code>, <code>№N</code>, <code>#N</code> с любым разделителем после числа (<code>. ) : - – —</code> или просто пробел). Также понимаются явные пары <code>Q:</code>/<code>A:</code> (или <code>Вопрос:</code>/<code>Ответ:</code>) и блоки, отделённые просто пустой строкой.</p>
     <p>Или используйте <strong>кастомный разделитель</strong> (⚙ Настройки импорта), например <code>---</code>:</p>
     <div class="docs-codeblock">Что такое фагоцитоз?
 Процесс поглощения клеткой твёрдых частиц
 <strong>---</strong>
 Что такое пиноцитоз?
 Процесс поглощения клеткой жидкости</div>
-    <p>Первая строка каждого блока → вопрос, остальное → ответ. При повторном импорте статистика по совпадающим вопросам сохраняется.</p>
+    <p>Первая строка каждого блока → вопрос, остальное → ответ. Маркеры списков (<code>- • * → —</code>) очищаются автоматически. При повторном импорте статистика по совпадающим вопросам сохраняется.</p>
 
     <h2>Режим 2 — MCQ-Тест</h2>
-    <p>Загрузите готовые тесты с вариантами ответов. Поддерживается формат:</p>
-    <div class="docs-codeblock"><strong>1)</strong> Текст вопроса (может быть многострочным,
+    <p>Загрузите готовые тесты с вариантами ответов. Парсер понимает:</p>
+    <div class="docs-codeblock">Текст вопроса (может быть многострочным,
 продолжение склеивается автоматически)
-<strong>1.</strong> Первый вариант
-<strong>2.</strong> Второй вариант
-<strong>3.</strong> Третий вариант
-Правильный ответ: 2
-
-<strong>2)</strong> Следующий вопрос...
-...</div>
-    <p>Вопросы разделяются через <code>N)</code>, варианты ответа — через <code>N.</code>. Перенос слова через дефис (<code>вхо-<br>дить</code>) склеивается автоматически. После загрузки сразу запускается тест, статистика накапливается по сессиям.</p>
+<strong>1)</strong> Первый вариант    <span style="color:var(--muted)">или 1. / А) / а.</span>
+<strong>2)</strong> Второй вариант
+<strong>3)</strong> Третий вариант
+<strong>Ответ: 2</strong>            <span style="color:var(--muted)">или «Правильный ответ: 1, 3» / «Верный ответ — Б»</span></div>
+    <p>Опциональный заголовок <code>Вопрос N.</code> в начале блока — парсер его игнорирует. Поддерживаются числовые (<code>1-9</code>) и буквенные (<code>А-Й</code>, <code>a-j</code>) варианты. Несколько правильных = multi-select (нужно выбрать все). Блоки разделяются <strong>пустой строкой</strong> после ответа.</p>
 
     <h2>Способы загрузки</h2>
     <table class="docs-table">
@@ -2066,33 +2061,42 @@ function mcqFileLoadLanding(e) {
 
 function mcqParseAndStartLanding() {
   const text = document.getElementById('mcq-textarea-landing').value;
-  if (!text.trim()) { document.getElementById('mcq-parse-hint-landing').textContent = '⚠ Вставьте текст теста'; return; }
+  const hint = document.getElementById('mcq-parse-hint-landing');
+  if (!text.trim()) { hint.textContent = '⚠ Вставьте текст теста'; return; }
 
   const delimMode = document.querySelector('input[name="mcq-delim"]:checked')?.value || 'auto';
   const customDelim = delimMode === 'custom' ? document.getElementById('mcq-custom-delim').value.trim() : null;
 
   if (delimMode === 'custom' && !customDelim) {
-    document.getElementById('mcq-parse-hint-landing').textContent = '⚠ Укажите кастомный разделитель';
+    hint.textContent = '⚠ Укажите кастомный разделитель';
     return;
   }
 
   // If custom delimiter: split text into blocks first, then parse each block as MCQ
   let parseText = text;
   if (customDelim) {
-    // Join blocks back with double newline so parseMcqText can handle them normally
     parseText = text.split(customDelim).map(b => b.trim()).filter(Boolean).join('\n\n');
   }
 
-  const parsed = parseMcqText(parseText);
-  if (!parsed.length) {
-    document.getElementById('mcq-parse-hint-landing').textContent = '⚠ Вопросы не найдены — проверьте формат';
+  const result = parseMcqText(parseText);
+  if (!result.items.length) {
+    const why = result.reasons && result.reasons.length
+      ? ' (' + summarizeReasons(result.reasons) + ')'
+      : '';
+    hint.textContent = '⚠ Вопросы не найдены — проверьте формат' + why;
     return;
   }
   const existing = {};
   const saved = localStorage.getItem(LS_MCQ);
   if (saved) JSON.parse(saved).forEach(q => { existing[q.question] = q.stats; });
-  mcqQuestions = parsed.map(q => ({ ...q, stats: existing[q.question] || q.stats }));
+  mcqQuestions = result.items.map(q => ({ ...q, stats: existing[q.question] || q.stats }));
   localStorage.setItem(LS_MCQ, JSON.stringify(mcqQuestions));
+  // tell the user what got skipped (if anything)
+  if (result.dropped > 0) {
+    hint.textContent = `✓ Загружено ${result.items.length} · отброшено ${result.dropped} (${summarizeReasons(result.reasons)})`;
+  } else {
+    hint.textContent = `✓ Загружено ${result.items.length} вопросов`;
+  }
   // collapse import, go straight to test
   document.getElementById('import-collapsible').classList.add('collapsed');
   document.getElementById('import-toggle-wrap').style.display = 'block';
@@ -2101,6 +2105,16 @@ function mcqParseAndStartLanding() {
   const hero = document.querySelector('.landing-hero');
   if (hero) hero.style.display = 'none';
   mcqBegin(false);
+}
+
+function summarizeReasons(reasons) {
+  if (!reasons || !reasons.length) return '';
+  const counts = {};
+  for (const r of reasons) counts[r] = (counts[r] || 0) + 1;
+  return Object.entries(counts)
+    .sort((a, b) => b[1] - a[1])
+    .map(([r, n]) => n > 1 ? `${r} ×${n}` : r)
+    .join('; ');
 }
 
 // ═══════════════════════════════════════════════
@@ -2133,33 +2147,202 @@ function updateActiveTile() {
 }
 
 // ═══════════════════════════════════════════════
-//  PARSER (unchanged)
+//  PARSER — flashcards + MCQ
 // ═══════════════════════════════════════════════
-function parseQuestions(text, delimiter) {
-  if (delimiter) {
-    const blocks = text.split(delimiter).map(b => b.trim()).filter(Boolean);
-    const result = [];
-    for (const block of blocks) {
-      const lines = block.split('\n').map(l => l.trim()).filter(Boolean);
-      if (lines.length < 2) continue;
-      const question = lines[0];
-      let answer = lines.slice(1).join('\n').replace(/^[-•\t]/gm, '').trim();
-      if (question && answer) result.push({ question, answer, stats: { seen:0, correct:0, wrong:0 } });
-    }
-    return result;
+// Shared helpers ─────────────────────────────────
+function normalizeText(text) {
+  return String(text || '')
+    .replace(/^\uFEFF/, '')
+    .replace(/\r\n?/g, '\n')
+    .replace(/\u00A0/g, ' ')
+    .replace(/[ \t]+\n/g, '\n');
+}
+
+const LETTER_MAP = (() => {
+  const ru = ['а','б','в','г','д','е','ж','з','и','к'];
+  const en = ['a','b','c','d','e','f','g','h','i','j'];
+  const map = {};
+  ru.forEach((ch, i) => { map[ch] = i + 1; map[ch.toUpperCase()] = i + 1; });
+  en.forEach((ch, i) => { map[ch] = i + 1; map[ch.toUpperCase()] = i + 1; });
+  return map;
+})();
+const LETTER_RE = '[a-jA-JА-ИК-Ка-ик-к]';
+
+function stripBulletPrefix(line) {
+  return line.replace(/^[\s]*[-–—•*>·▪►→]+[\s]+/, '').replace(/^[\t]+/, '');
+}
+
+const HEADER_KW = '(?:вопрос|билет|тема|question|q|задача|task)';
+const HEADER_RE_KW = new RegExp('^\\s*' + HEADER_KW + '\\s*[№#]?\\s*(\\d+)\\s*[.)\\]:\\-–—]?\\s*(.*)$', 'i');
+const HEADER_RE_NUM_SYM = /^\s*[№#]\s*(\d+)\s*[.)\]:\-–—]?\s*(.*)$/;
+const HEADER_RE_BARE = /^\s*(\d+)\s*[.)]\s+(.+)$/;
+
+const QA_Q_RE = /^\s*(?:q|в|вопрос)\s*[:.\-–—]\s*(.+)$/i;
+const QA_A_RE = /^\s*(?:a|о|ответ)\s*[:.\-–—]\s*(.*)$/i;
+
+// Flashcards ─────────────────────────────────────
+function parseQuestions(rawText, customDelimiter) {
+  const text = normalizeText(rawText);
+  if (!text.trim()) return { items: [], dropped: 0, reasons: [] };
+
+  if (customDelimiter) {
+    const blocks = text.split(customDelimiter).map(b => b.trim()).filter(Boolean);
+    return buildFlashcards(blocks);
   }
 
-  const blocks = text.split(/Вопрос\s*\d+\./i);
-  const result = [];
-  for (let i = 1; i < blocks.length; i++) {
-    let block = blocks[i].trim();
-    if (!block) continue;
-    const lines = block.split('\n').map(l => l.trim()).filter(Boolean);
-    const question = lines[0];
-    let answer = lines.slice(1).join('\n').replace(/^[-•\t]/gm, '').trim();
-    if (question && answer) result.push({ question, answer, stats: { seen:0, correct:0, wrong:0 } });
+  // 1. Prefer the header form (Вопрос N / Билет N / №N / Question N / ...) whenever we
+  //    find at least two such headers — that is the dominant format users actually paste.
+  const blocksByHeader = splitByHeader(text);
+  if (blocksByHeader.length >= 2) {
+    return buildFlashcardsFromHeaders(blocksByHeader);
   }
-  return result;
+
+  // 2. Only fall back to explicit Q:/A: pairs when the whole text is dominated by them.
+  //    (Earlier we matched on the mere presence of "Q:" anywhere, which silently dropped
+  //    other formats — guard with a header-count comparison instead.)
+  if (/(^|\n)\s*(?:q|в|вопрос)\s*[:.\-–—]/i.test(text) &&
+      /(^|\n)\s*(?:a|о|ответ)\s*[:.\-–—]/i.test(text)) {
+    const qa = parseExplicitQA(text);
+    if (qa.items.length && qa.items.length >= blocksByHeader.length) return qa;
+  }
+
+  if (blocksByHeader.length === 1 && blocksByHeader[0].title) {
+    return buildFlashcardsFromHeaders(blocksByHeader);
+  }
+
+  const blocksByBareNum = splitByBareNumeric(text);
+  if (blocksByBareNum.length >= 2) {
+    return buildFlashcardsFromHeaders(blocksByBareNum);
+  }
+
+  const blocksByBlank = text.split(/\n[ \t]*\n+/).map(b => b.trim()).filter(Boolean);
+  if (blocksByBlank.length >= 2) return buildFlashcards(blocksByBlank);
+
+  return buildFlashcards([text.trim()]);
+}
+
+function splitByHeader(text) {
+  const lines = text.split('\n');
+  const blocks = [];
+  let cur = null;
+  for (const rawLine of lines) {
+    const line = rawLine.trimEnd();
+    const m = matchHeaderKw(line);
+    if (m) {
+      if (cur) blocks.push(cur);
+      cur = { num: m.num, title: m.title.trim(), body: [] };
+    } else if (cur) {
+      cur.body.push(line);
+    }
+  }
+  if (cur) blocks.push(cur);
+  return blocks;
+}
+
+function matchHeaderKw(line) {
+  let m = line.match(HEADER_RE_KW);
+  if (m) return { num: parseInt(m[1], 10), title: m[2] || '' };
+  m = line.match(HEADER_RE_NUM_SYM);
+  if (m) return { num: parseInt(m[1], 10), title: m[2] || '' };
+  return null;
+}
+
+function splitByBareNumeric(text) {
+  const lines = text.split('\n');
+  const blocks = [];
+  let cur = null;
+  let prevNum = 0;
+  for (const rawLine of lines) {
+    const line = rawLine.trimEnd();
+    const m = line.match(HEADER_RE_BARE);
+    if (m && parseInt(m[1], 10) === prevNum + 1 && (m[2].length >= 10 || /\s/.test(m[2].trim()))) {
+      if (cur) blocks.push(cur);
+      cur = { num: parseInt(m[1], 10), title: m[2].trim(), body: [] };
+      prevNum = cur.num;
+    } else if (cur) {
+      cur.body.push(line);
+    }
+  }
+  if (cur) blocks.push(cur);
+  return blocks;
+}
+
+function buildFlashcardsFromHeaders(blocks) {
+  const items = [];
+  let dropped = 0;
+  const reasons = [];
+  for (const blk of blocks) {
+    let question = blk.title;
+    let answer = blk.body.join('\n');
+    if (!question) {
+      const bodyLines = answer.split('\n').map(l => l.trim()).filter(Boolean);
+      if (bodyLines.length < 2) { dropped++; reasons.push('Без вопроса'); continue; }
+      question = bodyLines[0];
+      answer = bodyLines.slice(1).join('\n');
+    }
+    answer = answer.split('\n').map(stripBulletPrefix).join('\n').trim();
+    question = question.replace(/^[*_~]+|[*_~]+$/g, '').trim();
+    if (!question || !answer) { dropped++; reasons.push('Пустой ответ'); continue; }
+    items.push({ question, answer, stats: { seen: 0, correct: 0, wrong: 0 } });
+  }
+  return { items, dropped, reasons };
+}
+
+function buildFlashcards(blocks) {
+  const items = [];
+  let dropped = 0;
+  const reasons = [];
+  for (const block of blocks) {
+    const lines = block.split('\n').map(l => l.trim()).filter(Boolean);
+    if (lines.length < 2) { dropped++; reasons.push('Меньше двух строк'); continue; }
+    let question = lines[0]
+      .replace(HEADER_RE_KW, '$2')
+      .replace(HEADER_RE_NUM_SYM, '$2')
+      .replace(/^\s*\d+\s*[.)]\s*/, '')
+      .trim();
+    if (!question) question = lines[0].trim();
+    let answer = lines.slice(1).map(stripBulletPrefix).join('\n').trim();
+    if (!question || !answer) { dropped++; reasons.push('Пустой блок'); continue; }
+    items.push({ question, answer, stats: { seen: 0, correct: 0, wrong: 0 } });
+  }
+  return { items, dropped, reasons };
+}
+
+function parseExplicitQA(text) {
+  const lines = text.split('\n');
+  const items = [];
+  let dropped = 0;
+  const reasons = [];
+  let curQ = null;
+  let curA = null;
+  const flush = () => {
+    if (curQ && curA !== null && curQ.trim() && curA.trim()) {
+      items.push({ question: curQ.trim(), answer: curA.trim(), stats: { seen: 0, correct: 0, wrong: 0 } });
+    } else if (curQ || (curA !== null && curA !== '')) {
+      dropped++; reasons.push('Незавершённая пара Q/A');
+    }
+    curQ = null; curA = null;
+  };
+  for (const rawLine of lines) {
+    const line = rawLine.trim();
+    const mq = line.match(QA_Q_RE);
+    const ma = line.match(QA_A_RE);
+    if (mq) {
+      flush();
+      curQ = mq[1];
+      curA = '';
+    } else if (ma) {
+      curA = ma[1] || '';
+    } else if (line) {
+      if (curA !== null && curA !== undefined) {
+        curA += (curA ? '\n' : '') + stripBulletPrefix(line);
+      } else if (curQ !== null) {
+        curQ += ' ' + line;
+      }
+    }
+  }
+  flush();
+  return { items, dropped, reasons };
 }
 
 // ═══════════════════════════════════════════════
@@ -2167,6 +2350,7 @@ function parseQuestions(text, delimiter) {
 // ═══════════════════════════════════════════════
 function parseAndLoad() {
   const text = document.getElementById('import-textarea').value;
+  const fileHint = document.getElementById('file-name');
   if (!text.trim()) { alert('Вставьте текст или загрузите файл.'); return; }
 
   const delimMode = document.querySelector('input[name="delim"]:checked').value;
@@ -2176,21 +2360,33 @@ function parseAndLoad() {
     alert('Укажите кастомный разделитель.'); return;
   }
 
-  const parsed = parseQuestions(text, customDelim);
-  if (!parsed.length) {
-    alert('Не удалось найти вопросы. Убедитесь в формате текста.'); return;
+  const result = parseQuestions(text, customDelim);
+  if (!result.items.length) {
+    const why = result.reasons && result.reasons.length
+      ? '\n\nПричины:\n• ' + summarizeReasons(result.reasons)
+      : '';
+    alert('Не удалось найти билеты. Проверьте формат текста.' + why);
+    return;
   }
 
   // merge stats from existing questions if same question text
   const existing = {};
   questions.forEach(q => { existing[q.question] = q.stats; });
-  questions = parsed.map(q => ({
+  questions = result.items.map(q => ({
     ...q,
     stats: existing[q.question] || q.stats
   }));
 
   saveData();
   buildUI();
+
+  if (fileHint) {
+    if (result.dropped > 0) {
+      fileHint.textContent = `✓ Загружено ${result.items.length} билетов · отброшено ${result.dropped} (${summarizeReasons(result.reasons)})`;
+    } else {
+      fileHint.textContent = `✓ Загружено ${result.items.length} билетов`;
+    }
+  }
 }
 
 function buildUI() {
@@ -3037,92 +3233,170 @@ function renderListItems(filter) {
 //  🎯 MCQ — ТЕСТ С ГОТОВЫМИ ВАРИАНТАМИ
 // ═══════════════════════════════════════════════
 
-function parseMcqText(text) {
-  const allLines = text.split('\n').map(l => l.trim());
+const MCQ_ANSWER_KW = '(?:правильн(?:ый|ые)\\s+ответ(?:ы)?|верн(?:ый|ые)\\s+ответ(?:ы)?|правильн(?:ый|ые)\\s+вариант(?:ы)?|ответ(?:ы)?|correct\\s+answer(?:s)?|answer(?:s)?)';
+const MCQ_ANSWER_RE = new RegExp('^\\s*' + MCQ_ANSWER_KW + '\\s*[:\\-–—=]?\\s*(.+?)\\s*[.;]?\\s*$', 'i');
+const MCQ_OPTION_RE = new RegExp('^\\s*(\\d+|' + LETTER_RE + ')\\s*[).\\]:\\-–—]\\s*(.+)$');
+const MCQ_Q_HEADER_KW = new RegExp('^\\s*' + HEADER_KW + '\\s*[№#]?\\s*(\\d+)\\s*[.)\\]:\\-–—]?\\s*(.*)$', 'i');
+const MCQ_Q_HEADER_NUM_SYM = /^\s*[№#]\s*(\d+)\s*[.)\]:\-–—]?\s*(.*)$/;
 
-  // Answer line: "Правильный ответ: 2" or "Ответ: 1, 3" or "Ответ: 2,4"
-  const isAnswerLine = l => /^(правильный\s+)?ответ[:\s]+[\d,\s]+$/i.test(l);
-  const isOption     = l => /^\d+[).]\s+\S/.test(l);
+function mcqIsAnswerLine(line) {
+  if (!line) return false;
+  const m = line.match(MCQ_ANSWER_RE);
+  if (!m) return false;
+  return mcqParseAnswerPayload(m[1]).length > 0;
+}
 
-  const blocks = [];
-  let cur = null;
+function mcqParseAnswerPayload(raw) {
+  const parts = String(raw).split(/[\s,;]+(?:и\s+)?|\sи\s+/i).map(p => p.trim()).filter(Boolean);
+  const nums = [];
+  for (const p of parts) {
+    if (p.toLowerCase() === 'и') continue;
+    if (/^\d+$/.test(p)) nums.push(parseInt(p, 10));
+    else if (p.length === 1 && LETTER_MAP[p] != null) nums.push(LETTER_MAP[p]);
+    else return [];
+  }
+  return nums;
+}
 
-  for (let i = 0; i < allLines.length; i++) {
-    const line = allLines[i];
+function mcqMatchOption(line) {
+  const m = line.match(MCQ_OPTION_RE);
+  if (!m) return null;
+  const head = m[1];
+  let num;
+  if (/^\d+$/.test(head)) num = parseInt(head, 10);
+  else if (LETTER_MAP[head] != null) num = LETTER_MAP[head];
+  else return null;
+  return { num, label: head, text: m[2].trim() };
+}
+
+function mcqMatchHeader(line) {
+  let m = line.match(MCQ_Q_HEADER_KW);
+  if (m) return { num: parseInt(m[1], 10), title: (m[2] || '').trim() };
+  m = line.match(MCQ_Q_HEADER_NUM_SYM);
+  if (m) return { num: parseInt(m[1], 10), title: (m[2] || '').trim() };
+  return null;
+}
+
+function mcqJoinSoftHyphenated(lines) {
+  let out = '';
+  for (const line of lines) {
     if (!line) continue;
+    out = mcqAppendSoftHyphenated(out, line);
+  }
+  return out.trim();
+}
 
-    const isVopros   = /^вопрос\s+\d+[).]/i.test(line);
-    const isNumParen = /^\d+\)\s+\S/.test(line);
-    const isNewQuestion = isVopros || isNumParen;
+function mcqAppendSoftHyphenated(prev, next) {
+  if (!prev) return next;
+  if (prev.endsWith('-')) return prev.slice(0, -1) + next;
+  return prev + ' ' + next;
+}
 
-    if (isNewQuestion && !isAnswerLine(line)) {
-      if (cur) blocks.push(cur);
+function mcqStripQuestionPrefix(text) {
+  return text
+    .replace(MCQ_Q_HEADER_KW, '$2')
+    .replace(MCQ_Q_HEADER_NUM_SYM, '$2')
+    .replace(/^\s*\d+\s*[).\]:\-–—]\s+/, '')
+    .trim();
+}
+
+function mcqIsSameLabelKind(a, b) {
+  const aNum = /^\d+$/.test(a);
+  const bNum = /^\d+$/.test(b);
+  return aNum === bNum;
+}
+
+function parseMcqText(rawText) {
+  const text = normalizeText(rawText);
+  const lines = text.split('\n').map(l => l.trim());
+
+  // Phase 1 — split into blocks.
+  const blocks = [];
+  let cur = [];
+  let blankBefore = true;
+  const lineLooksRelevant = l => !!mcqMatchOption(l) || mcqIsAnswerLine(l);
+
+  for (let i = 0; i < lines.length; i++) {
+    const line = lines[i];
+    if (!line) { blankBefore = true; continue; }
+
+    const header = mcqMatchHeader(line);
+    const cutByBlank = blankBefore && cur.length && cur.some(lineLooksRelevant);
+
+    if (header || cutByBlank) {
+      if (cur.length) blocks.push(cur);
       cur = [line];
-    } else if (cur) {
+    } else {
       cur.push(line);
     }
+    blankBefore = false;
   }
-  if (cur) blocks.push(cur);
+  if (cur.length) blocks.push(cur);
 
+  // Phase 2 — extract question + options + answer.
   const result = [];
+  const diag = { dropped: 0, reasons: [] };
 
   for (const block of blocks) {
-    if (block.length < 3) continue;
+    const answerIdx = block.findIndex(mcqIsAnswerLine);
+    if (answerIdx === -1) { diag.dropped++; diag.reasons.push('Нет строки «Ответ»'); continue; }
 
-    let questionText = block[0]
-      .replace(/^вопрос\s+\d+[).]\s*/i, '')
-      .replace(/^\d+[).]\s*/, '')
-      .trim();
-    if (!questionText) continue;
+    const answerRaw = block[answerIdx].match(MCQ_ANSWER_RE)[1];
+    const correctNums = mcqParseAnswerPayload(answerRaw);
+    if (!correctNums.length) { diag.dropped++; diag.reasons.push('Не удалось разобрать ответ'); continue; }
 
-    const answerLineIdx = block.findIndex(l => isAnswerLine(l));
-    if (answerLineIdx === -1) continue;
+    // Find option region — first opt-line whose next opt is sequential of same kind.
+    let optStart = -1;
+    let firstOptIdx = -1;
+    let prevOpt = null;
+    let prevOptIdx = -1;
+    for (let i = 0; i < answerIdx; i++) {
+      const o = mcqMatchOption(block[i]);
+      if (!o) continue;
+      if (firstOptIdx === -1) firstOptIdx = i;
+      if (prevOpt && o.num === prevOpt.num + 1 && mcqIsSameLabelKind(prevOpt.label, o.label)) {
+        optStart = prevOptIdx;
+        break;
+      }
+      prevOpt = o;
+      prevOptIdx = i;
+    }
+    if (optStart === -1) optStart = firstOptIdx;
+    if (optStart === -1) { diag.dropped++; diag.reasons.push('Не найдены варианты'); continue; }
 
-    // Parse one or multiple correct answers: "1" or "1, 3" or "2,4"
-    const answerRaw = block[answerLineIdx].replace(/^(правильный\s+)?ответ[:\s]*/i, '').trim();
-    const correctNums = answerRaw.split(/[\s,]+/).map(n => parseInt(n)).filter(n => !isNaN(n));
-    if (!correctNums.length) continue;
+    const headLines = block.slice(0, optStart);
+    let questionText = mcqJoinSoftHyphenated(headLines);
+    questionText = mcqStripQuestionPrefix(questionText);
+    if (!questionText) { diag.dropped++; diag.reasons.push('Нет текста вопроса'); continue; }
 
     const options = [];
-    let foundFirstOption = false;
-
-    for (let i = 1; i < answerLineIdx; i++) {
-      const ol = block[i];
-      const m = ol.match(/^(\d+)[).]\s+(.+)$/);
-      if (m) {
-        foundFirstOption = true;
-        options.push({ num: parseInt(m[1]), text: m[2].trim() });
-      } else if (!foundFirstOption) {
-        if (questionText.endsWith('-')) {
-          questionText = questionText.slice(0, -1) + ol;
-        } else {
-          questionText += ' ' + ol;
-        }
+    for (let i = optStart; i < answerIdx; i++) {
+      const o = mcqMatchOption(block[i]);
+      if (o) {
+        options.push({ num: o.num, label: o.label, text: o.text });
       } else if (options.length > 0) {
         const last = options[options.length - 1];
-        if (last.text.endsWith('-')) {
-          last.text = last.text.slice(0, -1) + ol;
-        } else {
-          last.text += ' ' + ol;
-        }
+        last.text = mcqAppendSoftHyphenated(last.text, block[i]);
       }
     }
 
-    if (options.length < 2) continue;
-    // Validate all correct answers exist in options
-    if (!correctNums.every(n => options.find(o => o.num === n))) continue;
+    if (options.length < 2) { diag.dropped++; diag.reasons.push('Меньше 2 вариантов'); continue; }
+    if (!correctNums.every(n => options.find(o => o.num === n))) {
+      diag.dropped++; diag.reasons.push('Ответ вне диапазона вариантов');
+      continue;
+    }
 
     const isMulti = correctNums.length > 1;
-
     result.push({
-      question: questionText.trim(),
+      question: questionText,
       options,
-      correct: isMulti ? correctNums : correctNums[0],  // array if multi, number if single
+      correct: isMulti ? correctNums : correctNums[0],
       multi: isMulti,
       stats: { seen: 0, correct: 0, wrong: 0, wrongStreak: 0 }
     });
   }
-  return result;
+
+  return { items: result, dropped: diag.dropped, reasons: diag.reasons };
 }
 
 // ── HUB (import screen for MCQ) ──────────────────
@@ -3203,6 +3477,12 @@ function mcqClearSaved() {
 }
 
 function mcqBegin(shuffle) {
+  // backward-compat: ensure every option has a `label` (older saved data didn't have it).
+  mcqQuestions.forEach(q => {
+    if (q && q.options) {
+      q.options.forEach(o => { if (o.label == null) o.label = String(o.num); });
+    }
+  });
   const pool = mcqQuestions.map((_, i) => i);
   if (shuffle) pool.sort(() => Math.random() - 0.5);
   mcqPos = 0;
@@ -3253,7 +3533,7 @@ function renderMcqQuestion() {
 
   const optionsHtml = q.options.map(o => `
     <button class="mcq-option" id="mcq-opt-${o.num}" onclick="${isMulti ? `mcqToggleSelect(${o.num})` : `mcqAnswer(${o.num})`}">
-      <span class="mcq-opt-num">${o.num}</span>
+      <span class="mcq-opt-num">${esc(o.label || String(o.num))}</span>
       <span class="mcq-opt-text">${esc(o.text)}</span>
     </button>`).join('');
 
@@ -3378,7 +3658,8 @@ function mcqFinishAnswer(isRight, chosenNums) {
   } else {
     const correctTexts = correctArr.map(n => {
       const opt = q.options.find(o => o.num === n);
-      return `<strong>${n}. ${esc(opt?.text || '')}</strong>`;
+      const label = opt?.label || String(n);
+      return `<strong>${esc(label)}. ${esc(opt?.text || '')}</strong>`;
     }).join(', ');
     fb.innerHTML = `✗ Неверно. Правильно: ${correctTexts}`;
     if (q.stats.wrongStreak >= 2) {
@@ -3406,7 +3687,8 @@ function renderMcqResults() {
     const q = mcqQuestions[i];
     const correctTexts = r.correctArr.map(n => {
       const opt = q?.options.find(o => o.num === n);
-      return opt ? `${n}. ${opt.text}` : n;
+      const label = opt?.label || String(n);
+      return opt ? `${label}. ${opt.text}` : n;
     }).join(', ');
     return `<div class="exam-result-row">
       <div style="flex:1">
